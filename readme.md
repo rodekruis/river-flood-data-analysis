@@ -1,8 +1,8 @@
 # Analysis and comparison of GloFAS and Google FloodHub river discharge data
 
-This repository contains scripts that together perform an analysis of [GloFAS](https://global-flood.emergency.copernicus.eu/)'s and [Google FloodHub](https://sites.research.google/floods/l/0/0/3)'s predictive performance of river discharge data. For both, the data is downloaded and transformed, then processed to a uniform type, and then their accuracies (e.g. by probability of detection (POD) and false alarm ratio (FAR)) are assessed using impact data.
+This repository contains scripts that together perform an analysis of [GloFAS](https://global-flood.emergency.copernicus.eu/)'s and [Google FloodHub](https://sites.research.google/floods/l/0/0/3)'s predictive performance of river discharge data. For both, the data is downloaded, processed to a uniform type, and, subsequently, their accuracies (e.g. by probability of detection (POD) and false alarm ratio (FAR)) are assessed using impact data.
 
-As of now, late 2024, the scripts focus on floods in Mali, but later, the goal is to generalize to more countries. For questions about GloFAS, contact [elskuipers@rodekruis.nl](mailto:elskuipers@rodekruis.nl), and for questions about FloodHub, contact [toldenburg@rodekruis.nl](mailto:toldenburg@rodekruis.nl).
+As of now, late 2024, the scripts focus on floods in Mali, but later, the goal is to generalize to more countries. For questions, contact [elskuipers@rodekruis.nl](mailto:elskuipers@rodekruis.nl) and [toldenburg@rodekruis.nl](mailto:toldenburg@rodekruis.nl).
 
 ## Overview
 
