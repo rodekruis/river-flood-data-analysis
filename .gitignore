@@ -1,2 +1,10 @@
+# ignore cache
 __pycache__/
+
+# ignore API keys
 key.txt
+
+# ignore experimentation notebooks
+extract.ipynb
+extract_OLD.ipynb
+analyse.ipynb

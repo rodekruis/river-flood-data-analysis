@@ -1,4 +1,4 @@
-# src/main.py
+# src/main_extract.py
 
 import sys
 import extract
