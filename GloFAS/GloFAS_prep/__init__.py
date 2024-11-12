@@ -8,3 +8,5 @@
 # os.chdir(working_dir)
 # sys.path.append(working_dir)
 # print (sys.path)
+
+from GloFAS.GloFAS_prep import vectorCheck

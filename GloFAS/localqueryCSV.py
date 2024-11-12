@@ -1,11 +1,13 @@
+
+# I apologize for these imports, but it had to be this way 
+import GloFAS.GloFAS_prep.configuration as cfg
+from GloFAS.GloFAS_analysis.aggregation import aggregation
+from GloFAS.GloFAS_data_extractor.unzip_open import unzipGloFAS, openGloFAS
+from GloFAS.GloFAS_prep.vectorCheck import checkVectorFormat # this is correctly imported 
+from GloFAS.GloFAS_data_extractor.forecast_dataFetch import compute_dates_range
 import os
 import numpy as np
 import pandas as pd
-import configuration as cfg
-from aggregation import aggregation
-from open_extract import unzipGloFAS, openGloFAS
-from vectorCheck import checkVectorFormat # this is correctly imported 
-from forecast_dataFetch import compute_dates_range
 
 def aggregate_forecasted(
     START_DATE,

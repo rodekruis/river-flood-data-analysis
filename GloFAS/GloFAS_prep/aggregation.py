@@ -4,7 +4,7 @@ import geopandas as gpd
 import pandas as pd
 from pathlib import Path
 from rasterstats import zonal_stats
-from vectorCheck import checkVectorFormat
+from GloFAS.GloFAS_prep.vectorCheck import checkVectorFormat
 from shapely import wkt
 import rioxarray as rio
 
