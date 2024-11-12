@@ -4,6 +4,7 @@ import geopandas as gpd
 import pandas as pd
 from pathlib import Path
 from rasterstats import zonal_stats
+from vectorCheck import checkVectorFormat
 from shapely import wkt
 import rioxarray as rio
 
@@ -38,18 +39,24 @@ def zonalStats(rasterDA, vectorGDF, measure='max'):
     communeMax_gdf = gpd.GeoDataFrame(communeMax_df, geometry=vectorGDF.geometry)
     return communeMax_gdf
 
-def query(rasterDA, pointGDF, nrEnsemble, timestamp):
-    '''
-    pointGDF= eodataframe with geometry describing the locations of the different points, nothing else
-    rasterDA = xarray.DataArray with 
-    '''
 
-    point_latitude, point_longitude = pointGDF.get_coordinates().values
-    pointGDF ['rastervalue'] = [x for x in rasterDA.sel(
-                                            latitude=point_latitude, 
-                                            longitude=point_longitude, 
-                                            method='nearest')] 
+def query(rasterDA, pointGDF):
+    '''
+    pointGDF: GeoDataFrame with geometry describing the locations of the different points, nothing else
+    rasterDA: xarray.DataArray with raster data
+    '''
+    coordinates = pointGDF.get_coordinates().values  # 2D array with latitudes and longitudes
+    point_latitude = coordinates[:, 0]  # Extract all latitudes (first column)
+    point_longitude = coordinates[:, 1]  # Extract all longitudes (second column)
+    
+    # Query the raster data for each point and store the result in a new 'rastervalue' column
+    pointGDF['rastervalue'] = [
+        rasterDA.sel(latitude=lat, longitude=lon, method='nearest').values.item()  # Get scalar value
+        for lat, lon in zip(point_latitude, point_longitude)
+    ]
+    
     return pointGDF
+
 
 def aggregation (rasterDA, vector, method, nrEnsemble=None, timestamp=None, measure=None): 
     '''
@@ -68,7 +75,7 @@ def aggregation (rasterDA, vector, method, nrEnsemble=None, timestamp=None, meas
     timestamp : str or datetime, optional
         Timestamp to select in case of time-dependent raster data.
     measure : str, optional
-        Statistical measure to calculate for zonal statistics (e.g., 'mean', 'sum').
+        Statistical measure to calculate for zonal statistics (e.g., 'mean', 'sum'). Only relevant for polygon or buffer aggregation
 
     Returns:
     GeoDataFrame 
@@ -85,12 +92,12 @@ def aggregation (rasterDA, vector, method, nrEnsemble=None, timestamp=None, meas
         # this argument is ignored when considering polygons, because on that level precision doesnt really matter
     vectorGDF = checkVectorFormat(vector, shapeType=method, crs=rasterDA.rio.crs, placement='model')
     if method == 'point': 
-        pointgdf = query(rasterDA_single, vectorGDF)
+        pointgdf = query(rasterDA, vectorGDF)
         return pointgdf 
     # elif method == 'bufferpoint': 
     #     return pointgdf
     elif method == 'polygon': 
-        admgdf = zonal_stats(rasterDA_single, vectorGDF, measure)
+        admgdf = zonal_stats(rasterDA, vectorGDF, measure)
         return admgdf
     else: 
         raise ValueError ("Invalid method, choose 'point', or 'adm_unit'")

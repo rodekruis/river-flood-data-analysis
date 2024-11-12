@@ -1,7 +1,7 @@
 import cdsapi
 import datetime
 import warnings
-import batch_configuration as cfg 
+import configuration as cfg 
 import os
 from pathlib import Path
 

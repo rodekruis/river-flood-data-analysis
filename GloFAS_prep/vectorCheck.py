@@ -1,3 +1,11 @@
+import xarray as xr 
+import geopandas as gpd
+import pandas as pd
+from pathlib import Path
+from rasterstats import zonal_stats
+from shapely import wkt
+import rioxarray as rio
+
 def checkVectorFormat(vector, shapeType=None, crs='EPSG:4326', placement='real'):
     ''' 
     Transforms various forms of vector inputs into a proper GeoDataFrame.
