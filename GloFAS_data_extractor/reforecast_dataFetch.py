@@ -5,7 +5,7 @@ from datetime import datetime, timedelta
 import os 
 
 '''
-Download data from glofas website, make sure you have a cds api token / key
+Download reforecast data from glofas website, make sure you have a cds api token / key
 , by following instructions here; https://ewds.climate.copernicus.eu/how-to-api#install-the-cds-api-token
 1. First register at the cds store
 2. Store a file at your homedirectory called .cdsapirc (so : $HOME/.cdsapirc)
@@ -58,7 +58,7 @@ def DataFetch (DataDir, leadtime, startYear, endYear, area):
                 'data_format': "grib2",
                 'download_format': "zip"
                 }
-        DownloadDir= Path(f'{DataDir}/{int(leadtime)}hours/GloFAS/')
+        DownloadDir= Path(f'{DataDir}/GloFASreforecast/{int(leadtime)}hours/')
         DownloadDir.mkdir(parents=True, exist_ok=True)
         os.chdir (DownloadDir)
         client = cdsapi.Client()

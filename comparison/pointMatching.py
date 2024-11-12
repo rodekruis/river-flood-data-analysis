@@ -4,7 +4,7 @@ import pandas as pd
 import numpy as np
 from shapely.geometry import Point
 from scipy.spatial import cKDTree
-from aggregation import checkVectorFormat
+from vectorCheck import checkVectorFormat
 import batch_configuration as cfg 
 
 def findclosestpoint(point_x, point_y, target_gdf):
