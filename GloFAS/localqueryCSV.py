@@ -1,7 +1,7 @@
 
 # I apologize for these imports, but it had to be this way 
 import GloFAS.GloFAS_prep.configuration as cfg
-from GloFAS.GloFAS_analysis.aggregation import aggregation
+from GloFAS.GloFAS_prep.aggregation import aggregation
 from GloFAS.GloFAS_data_extractor.unzip_open import unzipGloFAS, openGloFAS
 from GloFAS.GloFAS_prep.vectorCheck import checkVectorFormat # this is correctly imported 
 from GloFAS.GloFAS_data_extractor.forecast_dataFetch import compute_dates_range
@@ -32,7 +32,7 @@ def aggregate_forecasted(
     - DataDir (str): Directory to save the output CSV.
     - leadtime (int): Leadtime for the forecast.
     - IDhead (str): Column name for the station ID.
-    - probability (bool): Whether to aggregate based on probabilities.
+    - probability (bool): Whether to aggregate for different ensemble members (uncertainties).
     - probabilityInterval (int): The interval for probabilities (default 10).
     - output_filename (str): Name of the output file (default 'aggregated.csv').
 
@@ -63,7 +63,7 @@ def aggregate_forecasted(
 
         # Unzip and open raster data for the current date
         rasterPath = unzipGloFAS(DataDir, leadtime, month, day, year)
-        Q_da = openGloFAS(rasterPath, lakesPath, crs)
+        Q_da = openGloFAS(rasterPath, lakesPath, crs, forecastType='forecasted')
         
         # Aggregate data for probability case
         if probability:

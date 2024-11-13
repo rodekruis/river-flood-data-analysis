@@ -23,7 +23,7 @@ def unzipGloFAS (DataDir, leadtime, month, day, year=None):
         ValueError (f"Argument year should be of type str or int")
     return rasterPath
 
-def openGloFAS(rasterPath, lakesPath=None, crs='EPSG:4326'):
+def openGloFAS(rasterPath, lakesPath=None, crs='EPSG:4326', forecastType='reforecast'):
     '''Returns a DataArray with masked lakes for a single netcdf / grib file'''
 
     if rasterPath.endswith('grib'):
@@ -35,7 +35,8 @@ def openGloFAS(rasterPath, lakesPath=None, crs='EPSG:4326'):
 
     
     # Correct longitude transformation if needed (see GloFAS issues)
-    Q_ds["longitude"] = Q_ds["longitude"].where(Q_ds["longitude"] < 180, Q_ds["longitude"] - 360)
+    if forecastType=='reforecast': # because in reforecast area is specified, in forecast no
+        Q_ds["longitude"] = Q_ds["longitude"].where(Q_ds["longitude"] < 180, Q_ds["longitude"] - 360)
 
     Q_da = Q_ds["dis24"]
     Q_da.rio.write_crs(crs, inplace=True)

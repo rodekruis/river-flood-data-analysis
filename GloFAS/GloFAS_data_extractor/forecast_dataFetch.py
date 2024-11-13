@@ -1,7 +1,7 @@
 import cdsapi
 import datetime
 import warnings
-import configuration as cfg 
+import GloFAS.GloFAS_prep.configuration as cfg 
 import os
 from pathlib import Path
 
