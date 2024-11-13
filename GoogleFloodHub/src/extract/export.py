@@ -31,7 +31,7 @@ def extract_country_data_for_time_delta(
         path_API_key: str,
         country: str,
         delta: Tuple[datetime.datetime, datetime.datetime],
-        export: bool = True) -> pd.DataFrame:
+        export: bool = True) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
     """
     Combines the calls of the
     - ListGauges

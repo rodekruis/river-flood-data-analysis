@@ -70,6 +70,11 @@ def convert_ListGauges_to_df(gauges : List[Dict[str, Any]]) -> pd.DataFrame:
     df['latitude'] = df['location'].apply(lambda x: x['latitude'])
     df['longitude'] = df['location'].apply(lambda x: x['longitude'])
     df.drop(columns = ['location'], inplace = True)
+    # sort by gaugeId to ensure same response result for every API call;
+    # this also makes the orger consistent between ListGauges and GetGaugeModel
+    df['gaugeId'] = df['gaugeId'].astype(str).str.strip()
+    df = df.sort_values(by = 'gaugeId').reset_index(drop = True)
+
     return df
 
 
