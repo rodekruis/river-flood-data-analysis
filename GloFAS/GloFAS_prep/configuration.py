@@ -30,3 +30,4 @@ adminLevel = 2 # choose level on which you would like to aggregate : 1,2,3
 years = np.arange(startYear, endYear, 1)
 admPath = adminPaths [(adminLevel-1)] # generate the useful administrative unit path 
 nrCores = 6 #determine number of cpu cores to use
+measure = 'max' # measure to aggregate on 
