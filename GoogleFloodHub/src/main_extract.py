@@ -16,7 +16,7 @@ import extract
 
 
 def main():
-    print("BEWARE: as of October 2024, the API contains no data issued before July 2024\n")
+    print("BEWARE: as of November 2024, the API contains no data issued before July 2024\n")
     
     try:
         country, a, b = extract.validate_args(sys.argv)
