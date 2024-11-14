@@ -6,6 +6,7 @@ __author__ = 'valentijn7' # GitHub username
 print('\nRunning __init__.py for GoogleFloodHub-data-extractor')
 
 from .parse import validate_args
+from .parse import validate_forecasts
 from .exceptions import handle_exception
 from .getters import get_API_key
 from .getters import get_json_file

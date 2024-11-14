@@ -97,6 +97,10 @@ def convert_GetGaugeModel_to_df(response: List[Dict[str, Any]]) -> pd.DataFrame:
     # df['extremeDangerLevel'] = df['thresholds'].apply(lambda x: x['extremeDangerLevel'])
     # df['warningLevel'] = df['thresholds'].apply(lambda x: x['warningLevel'])
     df.drop(columns = ['thresholds'], inplace = True)
+    
+    # sort by gaugeId to ensure same response result for every API call
+    df['gaugeId'] = df['gaugeId'].astype(str).str.strip()
+    df = df.sort_values(by = 'gaugeId').reset_index(drop = True)
 
     return df
 

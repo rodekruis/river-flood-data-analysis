@@ -3,6 +3,7 @@
 import sys
 from typing import Tuple
 from datetime import datetime
+import pandas as pd
 
 
 def parse_args(args: list) -> Tuple:
@@ -69,7 +70,7 @@ def validate_country(country: str) -> str:
     return country
 
 
-def validate_args(args: list) -> Tuple:
+def validate_args(args: list) -> Tuple[str, datetime, datetime]:
     """
     Validate the command line arguments using helper functions
     
@@ -83,3 +84,38 @@ def validate_args(args: list) -> Tuple:
     country = validate_country(country)
     
     return country, a, b
+
+
+def validate_forecasts(
+        df: pd.DataFrame, dt: Tuple[datetime, datetime], country: str
+    ) -> None:
+    """
+    Validate the forecasts dataframe by checking if this it
+    contains the boundaries of the inputted time delta.
+    If it does, print a success message, if it does not,
+    print a warning message
+    
+    :param df: forecasts dataframe
+    :param dt: tuple of two datetime objects (forming a time delta)
+    :param country: country name
+    """
+    df['issue_date'] = pd.to_datetime(df['issue_date'])
+    min_issue_date = df['issue_date'].min()
+    max_issue_date = df['issue_date'].max()
+    a, b = dt
+                                            # minus 1 day because the API not always
+                                            # returns the data for the final day, e.g.
+                                            # when b is today or in the future
+    if min_issue_date > a or max_issue_date < b - pd.Timedelta(days = 1):
+        print(
+            f"Warning: Data is stored but may be incomplete. The request returned delta "
+            f"{min_issue_date.strftime('%Y-%m-%d')} to {max_issue_date.strftime('%Y-%m-%d')} "
+            f"which does not/partly cover the requested delta from {a.strftime('%Y-%m-%d')} "
+            f"to {b.strftime('%Y-%m-%d')}."
+        )
+    else:
+        print(
+            f"Extraction successful for {country} with issue dates from "
+            f"{min_issue_date.strftime('%Y-%m-%d')} spanning "
+            f"{(max_issue_date - min_issue_date).days} days of data"
+        )
