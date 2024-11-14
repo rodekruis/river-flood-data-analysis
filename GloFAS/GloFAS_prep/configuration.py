@@ -19,6 +19,8 @@ stationsDir = DataDir / f'stations'
 googlestations = stationsDir / 'coords_google_gauges_Mali.csv'
 GloFASstations = stationsDir / 'GloFAS_MaliStations_v4.csv'
 impact_csvPath = DataDir / "impact/MergedImpactData.csv"
+settlements_
+
 crs = f'EPSG:4326' 
 RPsyr = [1.5, 2.0, 5.0, 10.0] # return period threshold in years 
 leadtimes = 168 # hours

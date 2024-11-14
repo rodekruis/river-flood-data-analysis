@@ -1,16 +1,19 @@
 
 import xarray as xr 
 import geopandas as gpd
+import numpy as np
 import pandas as pd
 from pathlib import Path
 from rasterstats import zonal_stats
+import rasterio
+from rasterio.features import geometry_mask
 from GloFAS.GloFAS_prep.vectorCheck import checkVectorFormat
 from shapely import wkt
 import rioxarray as rio
 
 # checkVectorFormat(cfg.admPath)
 
-def zonalStats(rasterDA, vectorGDF, measure='max'):
+def zonalStats(rasterDA, vectorGDF, IDhead, measure='max'):
     '''
     default measure is max 
     '''
@@ -33,8 +36,8 @@ def zonalStats(rasterDA, vectorGDF, measure='max'):
     max_values = [zone[f'{measure}'] for zone in zs]
 
     communeMax_df = pd.DataFrame({
-        f'ADM{self.adminLevel}': vectorGDF[f'ADM{self.adminLevel}_FR'],
-        'max': max_values
+        f'{IDhead}': vectorGDF[f'{IDhead}'],
+        f'{measure}': max_values
     })
     communeMax_gdf = gpd.GeoDataFrame(communeMax_df, geometry=vectorGDF.geometry)
     return communeMax_gdf
@@ -58,7 +61,7 @@ def query(rasterDA, pointGDF):
     return pointGDF
 
 
-def aggregation (rasterDA, vector, method, nrEnsemble=None, timestamp=None, measure=None): 
+def aggregation (rasterDA, vector, method, nrEnsemble=None, timestamp=None, measure=None, IDhead=None): 
     '''
     Decision tree for data reduction by aggregation.
     
@@ -97,7 +100,7 @@ def aggregation (rasterDA, vector, method, nrEnsemble=None, timestamp=None, meas
     # elif method == 'bufferpoint': 
     #     return pointgdf
     elif method == 'polygon': 
-        admgdf = zonal_stats(rasterDA, vectorGDF, measure)
+        admgdf = zonalStats(rasterDA, vectorGDF, IDhead, measure)
         return admgdf
     else: 
         raise ValueError ("Invalid method, choose 'point', or 'adm_unit'")
