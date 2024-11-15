@@ -3,6 +3,7 @@
 from extract import get_json_file
 
 from .getters import get_country_polygon
+from .getters import get_severity_levels
 from .transform import convert_df_to_gdf
 from .transform import make_subset_for_gauge_and_issue_time
 from .transform import convert_country_code_to_iso_a3
@@ -187,7 +188,8 @@ def plot_week_of_gauge_forecast_for_issue_time(
 
 
 def plot_x_days_of_gauge_forecast_for_issue_time(
-        df : pd.DataFrame,
+        df_forecasts : pd.DataFrame,
+        df_gauge_models: pd.DataFrame,
         gauge: str,
         issue_date : datetime.datetime,
         days: int,
@@ -199,9 +201,12 @@ def plot_x_days_of_gauge_forecast_for_issue_time(
     issue times, giving 30 graphs in total, each of (7 + 1 =) 8 days length 
 
     :param df: DataFrame with forecasted values
+    :param df_gauge_models: DataFrame with gauge models
     :param gauge: ID of the gauge
-    :param issue_time: first issue time
+    :param issue_date: first issue time
     :param country: Name of the country
+    :param TeX: whether to use TeX for text rendering
+    :param export: whether to export the plot as a pdf
     """
     set_plot_style()
     set_TeX_style() if TeX else None
@@ -210,10 +215,19 @@ def plot_x_days_of_gauge_forecast_for_issue_time(
 
     # for plotting purposes, the time can be normalized
     issue_date = issue_date.replace(hour = 0, minute = 0, second = 0, microsecond = 0)
+
+    # plot severity levels (or equivalently, return period values)
+    severity_levels = get_severity_levels(df_gauge_models, gauge)
+    plt.axhline(y = severity_levels['two_year'], color = 'green',
+                linestyle = '--', linewidth = 0.8, label = '2-year rp')
+    plt.axhline(y = severity_levels['five_year'], color = 'orange',
+                linestyle = '--', linewidth = 0.8, label = '5-year rp')
+    plt.axhline(y = severity_levels['twenty_year'], color = 'red',
+                linestyle = '--', linewidth = 0.8, label = '20-year rp')
     
     for idx in range(days):
         df_subset = make_subset_for_gauge_and_issue_time(
-            df, gauge, issue_date + datetime.timedelta(days = idx)
+            df_forecasts, gauge, issue_date + datetime.timedelta(days = idx)
         ).copy()
         if df_subset.empty:
             print(f"No forecasted values for gauge {gauge} at {issue_date.date()}")

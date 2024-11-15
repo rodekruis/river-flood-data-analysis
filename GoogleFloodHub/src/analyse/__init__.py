@@ -8,6 +8,7 @@ print('\nRunning __init__.py for GoogleFloodHub-data-analyser')
 from .getters import get_country_data
 from .getters import get_country_polygon
 from .getters import get_shape_file
+from .getters import get_severity_levels
 from .transform import convert_df_to_gdf
 from .transform import subset_country_gauge_coords
 from .transform import make_subset_for_gauge_and_issue_time
