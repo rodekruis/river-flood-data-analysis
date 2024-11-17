@@ -17,6 +17,8 @@ from .plots import map_gauge_coordinates_of_country
 from .plots import plot_x_days_of_gauge_forecast_for_issue_time
 from .plots import plot_forecast_min_mean_max
 from .plots import plot_Niger_river_downstream_flow_stat
+from .plots import plot_reforecast
+from .plots import plot_reanalysis
 from .tests import assert_same_coord_system
 
 print('GoogleFloodHub-data-analyser initialized\n')
