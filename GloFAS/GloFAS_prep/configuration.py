@@ -3,7 +3,7 @@ import numpy as np
 import math
 import os
 
-os.chdir (f'C:\\Users\\els-2\\')
+os.chdir (f'C:\\Users\\els-2\\') 
 cur = Path.cwd() 
 DataDir = cur / 'MaliGloFAS\\data'
 # Mali area coordinates as in notation as used by GloFAS (which is very weird)
@@ -19,7 +19,7 @@ stationsDir = DataDir / f'stations'
 googlestations = stationsDir / 'coords_google_gauges_Mali.csv'
 GloFASstations = stationsDir / 'GloFAS_MaliStations_v4.csv'
 impact_csvPath = DataDir / "impact/MergedImpactData.csv"
-settlements_
+settlements_tif = DataDir / "GlobalHumanSettlement/GHS_BUILT_S_E2030_GLOBE_R2023A_54009_100_V1_0.tif"
 
 crs = f'EPSG:4326' 
 RPsyr = [1.5, 2.0, 5.0, 10.0] # return period threshold in years 
