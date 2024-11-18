@@ -8,7 +8,6 @@ def stampTrigger (floodProbability_gdf, actionLifetime, triggerProb, adminLevel)
     # make everything capital
     floodProbability_gdf[f'ADM{adminLevel}'] = floodProbability_gdf[f'ADM{adminLevel}'].apply(lambda x: unidecode.unidecode(x).upper())
     
-  
     floodCommune_gdf['StartValidTime'] = pd.to_datetime(floodCommune_gdf['ValidTime'], errors='coerce') # - timedelta(days=self.buffervalid)
     # incorporate actionlifetime
     floodCommune_gdf['EndValidTime'] = pd.to_datetime(floodCommune_gdf['ValidTime'], errors='coerce') + timedelta(days=actionLifetime)
@@ -19,7 +18,7 @@ def stampTrigger (floodProbability_gdf, actionLifetime, triggerProb, adminLevel)
 
     return floodCommune_gdf
 
-def createEvent(triggerstamped_gdf, adminLevel, ):
+def createEvent(triggerstamped_gdf, adminLevel ):
     # Sort the dataframe by 'ValidTime', then by administrative unit: so that for each administrative unit, they are 
     # First sort on administrative level,  then sort on valid time 
     triggerstamped_gdf = triggerstamped_gdf.sort_values(by=[f'ADM{adminLevel}','ValidTime']).reset_index(drop=True)
@@ -65,11 +64,9 @@ def createEvent(triggerstamped_gdf, adminLevel, ):
                 'geometry': row['geometry']
             })
             
-
             # Append the event to the list of events
             eventADM_data.append(temp_event_df)
-        
-            
+                    
         else:
             # Move to the next row if no event is found
             r += 1
@@ -79,7 +76,7 @@ def createEvent(triggerstamped_gdf, adminLevel, ):
         # eventADM_data = pd.DataFrame(eventADM_data) 
         GloFASevents_gdf = pd.concat(eventADM_data, ignore_index=True)
         GloFASevents_gdf = gpd.GeoDataFrame(GloFASevents_gdf, geometry='geometry')
-    
+
         return GloFASevents_gdf
     else:
         # Return an empty GeoDataFrame if no events were found

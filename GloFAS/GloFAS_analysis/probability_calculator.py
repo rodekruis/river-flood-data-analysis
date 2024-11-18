@@ -11,7 +11,7 @@ from GloFAS.GloFAS_data_extractor.unzip_open import openGloFAS, unzipGloFAS
 import GloFAS.GloFAS_prep.configuration as cfg
 
 class FloodProbabilityProcessor:
-    def __init__(self, leadtime, adminLevel, forecastType, measure='max', start_date=None, end_date=None):
+    def __init__(self, leadtime, adminLevel, forecastType, measure='max', start_date=None, end_date=None, nrCores=4):
         # start and end_date are only necessary if your forecastType is not 'reforecast' but 'forecast'
         self.leadtime = leadtime
         self.adminLevel = adminLevel
@@ -31,6 +31,7 @@ class FloodProbabilityProcessor:
         self.reference_Q_da = openGloFAS(self.reference_rasterPath, self.lakesPath, self.crs)
         self.threshold_da = openThreshold(self.DataDir, self.crs, self.RPyr, self.area, self.reference_Q_da)
         self.threshold_gdf = aggregation(self.threshold_da, adminPath, 'polygon', measure=cfg.measure)
+        self.nrCores = nrCores
 
     def exceedance(self, Q_da, threshold_gdf, nrEnsemble):
         '''Check exceedance of threshold values for a single ensemble member'''
