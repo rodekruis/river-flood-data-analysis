@@ -3,16 +3,19 @@
 from extract import get_json_file
 
 from .getters import get_country_polygon
+from .getters import get_severity_levels
 from .transform import convert_df_to_gdf
 from .transform import make_subset_for_gauge_and_issue_time
 from .transform import convert_country_code_to_iso_a3
 from .statistics import z_normalise
 from .statistics import get_stats_for_forecast_range
 
-
-from typing import List
+from typing import Any, List, Tuple
 import datetime
 import pandas as pd
+import xarray as xr
+import matplotlib as mpl
+import matplotlib.pyplot as plt
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
 from matplotlib.ticker import MaxNLocator
@@ -187,7 +190,8 @@ def plot_week_of_gauge_forecast_for_issue_time(
 
 
 def plot_x_days_of_gauge_forecast_for_issue_time(
-        df : pd.DataFrame,
+        df_forecasts : pd.DataFrame,
+        df_gauge_models: pd.DataFrame,
         gauge: str,
         issue_date : datetime.datetime,
         days: int,
@@ -199,9 +203,12 @@ def plot_x_days_of_gauge_forecast_for_issue_time(
     issue times, giving 30 graphs in total, each of (7 + 1 =) 8 days length 
 
     :param df: DataFrame with forecasted values
+    :param df_gauge_models: DataFrame with gauge models
     :param gauge: ID of the gauge
-    :param issue_time: first issue time
+    :param issue_date: first issue time
     :param country: Name of the country
+    :param TeX: whether to use TeX for text rendering
+    :param export: whether to export the plot as a pdf
     """
     set_plot_style()
     set_TeX_style() if TeX else None
@@ -210,10 +217,19 @@ def plot_x_days_of_gauge_forecast_for_issue_time(
 
     # for plotting purposes, the time can be normalized
     issue_date = issue_date.replace(hour = 0, minute = 0, second = 0, microsecond = 0)
+
+    # plot severity levels (or equivalently, return period values)
+    severity_levels = get_severity_levels(df_gauge_models, gauge)
+    plt.axhline(y = severity_levels['two_year'], color = 'green',
+                linestyle = '--', linewidth = 0.8, label = '2-year rp')
+    plt.axhline(y = severity_levels['five_year'], color = 'orange',
+                linestyle = '--', linewidth = 0.8, label = '5-year rp')
+    plt.axhline(y = severity_levels['twenty_year'], color = 'red',
+                linestyle = '--', linewidth = 0.8, label = '20-year rp')
     
     for idx in range(days):
         df_subset = make_subset_for_gauge_and_issue_time(
-            df, gauge, issue_date + datetime.timedelta(days = idx)
+            df_forecasts, gauge, issue_date + datetime.timedelta(days = idx)
         ).copy()
         if df_subset.empty:
             print(f"No forecasted values for gauge {gauge} at {issue_date.date()}")
@@ -392,4 +408,79 @@ def plot_Niger_river_downstream_flow_stat(
     plt.tight_layout()
     plt.show()
 
+
+def add_return_periods(
+        ax: mpl.axes, gauge_return_periods_ds: xr.core.dataset.Dataset, thresholds: Tuple[int]
+    ) -> None:
+    """
+    Adds horizontal lines with return periods to a plot
+
+    :param ax: axis to add the return periods to
+    :param gauge_return_periods_ds: return periods dataset
+    :param thresholds: list of thresholds to add return periods for
+    """
+    colors = ('yellow', 'orange', 'red', 'brown', 'black')
+
+    for threshold, color in zip(thresholds, colors):
+        ax.axhline(
+            y = gauge_return_periods_ds[f'return_period_{threshold}'].item(),
+            color = color,
+            label = f'{threshold}-yr return period',
+            linestyle = '--'
+        )
+
+
+def plot_reforecast(
+        issue_time_start_date: str, issue_time_end_date: str,
+        ds_reforecast: xr.core.dataset.Dataset,
+        ds_return_periods: xr.core.dataset.Dataset,
+        thresholds: Tuple[int] = ('2', '5', '20')
+    ) -> None:
+    """ 
+    Plots reforecast data for a give time range
+
+    :param issue_time_start_date: start date for the issue time
+    :param issue_time_end_date: end date for the issue time
+    :param gauge_return_periods_ds: return periods dataset
+    :param thresholds: list of thresholds to add return periods for
+    """
+    fig, ax = plt.subplots(figsize = (20, 4))
+    issue_times = ds_reforecast.sel(issue_time = \
+                        slice(issue_time_start_date, issue_time_end_date))['issue_time']
+
+    for issue_time in issue_times:      # select issue time slice
+        issue_time_slice = ds_reforecast.sel(issue_time = issue_time)
+                                        # convert lead time to dates and
+                                        # divide by 10**9 to convert to seconds
+        lead_time_to_dates = [pd.to_datetime(issue_time.values) + \
+                              datetime.timedelta(seconds = (lead_time.item() // 10**9)) \
+                                for lead_time in issue_time_slice['lead_time']]
+                                        # for each lead time, plot the streamflow
+        ax.plot(lead_time_to_dates, issue_time_slice.streamflow.values)
+
+    add_return_periods(ax, ds_return_periods, thresholds)
+    plt.legend(loc = 'upper right')
+    plt.show()
+
+
+def plot_reanalysis(start_date: str, end_date: str,
+                    ds_reanalysis: xr.core.dataset.Dataset,
+                    ds_return_periods: xr.core.dataset.Dataset,
+                    thresholds = ('2', '5', '20')
+    ) -> None:
+    """
+    Plots reanalysis data for a given time range
+
+    :param start_date: start date for the time range
+    :param end_date: end date for the time range
+    :param gauge_reanalysis_ds: reanalysis dataset
+    :param gauge_return_periods_ds: return periods dataset
+    :param thresholds: list of thresholds to add return periods for
+    """
+    fig, ax = plt.subplots(figsize = (20, 4))
+    ds_subset = ds_reanalysis.streamflow.sel(time = slice(start_date, end_date))
     
+    ax.plot(ds_subset.time, ds_subset.values)
+    add_return_periods(ax, ds_return_periods, thresholds)
+    plt.legend(loc = 'upper right')
+    plt.show()

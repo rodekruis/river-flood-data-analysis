@@ -18,7 +18,9 @@ import extract
 
 
 def main():
-    print("BEWARE: as of November 2024, the API contains no data issued before July 2024\n")
+    # The API was first anticipated to get historical data, but its main focus
+    # has been shifted to potential continuous real-time forecasts in the future.
+    print("BEWARE: The API only contains data issued the earliest in July 2024\n")
     
     try:
         country, a, b = extract.validate_args(sys.argv)

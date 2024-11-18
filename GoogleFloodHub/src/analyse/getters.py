@@ -122,3 +122,24 @@ def get_country_polygon(country_code : str) -> gpd.GeoDataFrame:
         raise ValueError(f'Country with ISO A3 code {country_code} not found')
     
     return gpd.GeoDataFrame(geometry = [country_row['geometry'].values[0]])
+
+
+def get_severity_levels(df: pd.DataFrame, hybas: str) -> dict:
+    """
+    Get the severity levels for a hybas from the dataframe,
+    where 'warningLevel' corresponds to a two-year return period,
+    'dangerLevel' to a 5-year return period, and
+    'extremeDangerLevel' to a 20-year return period.
+
+    :param df: the dataframe
+    :param hybas: the hybas
+    :return: the severity levels
+    """
+    two_year = df[df['gaugeId'] == hybas]['warningLevel'].values[0]
+    five_year = df[df['gaugeId'] == hybas]['dangerLevel'].values[0]
+    twenty_year = df[df['gaugeId'] == hybas]['extremeDangerLevel'].values[0]
+    return {
+        'two_year': two_year,
+        'five_year': five_year,
+        'twenty_year': twenty_year
+    }
