@@ -7,5 +7,8 @@ key.txt
 # ignore experimentation notebooks
 extract.ipynb
 extract_OLD.ipynb
+extract_GRRR_OLD.ipynb
+FloodStatus_API.ipynb
+Hydrological_Models_API.ipynb
 # analyse.ipynb
 GRRR_Google_Runoff_Reanalysis_&_Reforecast.ipynb
