@@ -3,12 +3,11 @@ import pandas as pd
 import geopandas as gpd
 import numpy as np
 import unidecode
-import configuration as cfg
 import matplotlib.pyplot as plt
 from datetime import datetime, timedelta
 
 class FloodDefiner:
-    def __init__(adminLevel):
+    def __init__(self, adminLevel):
         self.adminLevel = adminLevel
 
     def stampTrigger (self, floodProbability_gdf, actionLifetime, triggerProb):
@@ -18,23 +17,23 @@ class FloodDefiner:
         # make everything capital
         floodProbability_gdf[f'ADM{self.adminLevel}'] = floodProbability_gdf[f'ADM{self.adminLevel}'].apply(lambda x: unidecode.unidecode(x).upper())
         
-        floodCommune_gdf['StartValidTime'] = pd.to_datetime(floodCommune_gdf['ValidTime'], errors='coerce') # - timedelta(days=self.buffervalid)
+        floodProbability_gdf['StartValidTime'] = pd.to_datetime(floodProbability_gdf['ValidTime'], errors='coerce') # - timedelta(days=self.buffervalid)
         # incorporate actionlifetime
-        floodCommune_gdf['EndValidTime'] = pd.to_datetime(floodCommune_gdf['ValidTime'], errors='coerce') + timedelta(days=actionLifetime)
-        floodCommune_gdf['StartValidTime'] = pd.to_datetime(floodCommune_gdf['StartValidTime'], format='%d/%m/%Y', errors='coerce')
-        floodCommune_gdf['EndValidTime'] = pd.to_datetime(floodCommune_gdf['EndValidTime'], format='%d/%m/%Y', errors='coerce')
+        floodProbability_gdf['EndValidTime'] = pd.to_datetime(floodProbability_gdf['ValidTime'], errors='coerce') + timedelta(days=actionLifetime)
+        floodProbability_gdf['StartValidTime'] = pd.to_datetime(floodProbability_gdf['StartValidTime'], format='%d/%m/%Y', errors='coerce')
+        floodProbability_gdf['EndValidTime'] = pd.to_datetime(floodProbability_gdf['EndValidTime'], format='%d/%m/%Y', errors='coerce')
         # Add Trigger column based on probability threshold
-        floodCommune_gdf['Trigger'] = np.where(floodCommune_gdf['Probability'] >= triggerProb, 1, 0)
+        floodProbability_gdf['Trigger'] = np.where(floodProbability_gdf['Probability'] >= triggerProb, 1, 0)
 
-        return floodCommune_gdf
+        return floodProbability_gdf
 
     def createEvent(self, triggerstamped_gdf):
         # Sort the dataframe by 'ValidTime', then by administrative unit: so that for each administrative unit, they are 
         # First sort on administrative level,  then sort on valid time 
-        triggerstamped_gdf = triggerstamped_gdf.sort_values(by=[f'ADM{adminLevel}','ValidTime']).reset_index(drop=True)
+        triggerstamped_gdf = triggerstamped_gdf.sort_values(by=[f'ADM{self.adminLevel}','ValidTime']).reset_index(drop=True)
 
         # Prepare commune info with geometry for event creation
-        commune_info_df = triggerstamped_gdf[[f'ADM{adminLevel}', 'geometry']].copy()
+        commune_info_df = triggerstamped_gdf[[f'ADM{self.adminLevel}', 'geometry']].copy()
         
         eventADM_data = []
                 
@@ -50,7 +49,7 @@ class FloodDefiner:
                 continue
             
             # Checking if the current row and next row are both part of an event (Trigger == 1), and the trigger happens in the same adiministrative unit
-            elif row['Trigger'] == 1 and r + 1 < len(triggerstamped_gdf) and triggerstamped_gdf.iloc[r + 1]['Trigger'] == 1 and row[f'ADM{adminLevel}']==triggerstamped_gdf.iloc[r + 1][f'ADM{adminLevel}']:
+            elif row['Trigger'] == 1 and r + 1 < len(triggerstamped_gdf) and triggerstamped_gdf.iloc[r + 1]['Trigger'] == 1 and row[f'ADM{self.adminLevel}']==triggerstamped_gdf.iloc[r + 1][f'ADM{self.adminLevel}']:
                 Event = 1
                 StartValidTime = row['StartValidTime'] 
                 # Continue until the end of the event where 'Trigger' is no longer 1
@@ -67,7 +66,7 @@ class FloodDefiner:
                     
                 # Create a temporary dataframe for the current event
                 temp_event_df = pd.DataFrame({
-                    f'ADM{adminLevel}': [row[f'ADM{adminLevel}']],
+                    f'ADM{self.adminLevel}': [row[f'ADM{self.adminLevel}']],
                     'Event': [Event],
                     'StartValidTime': [StartValidTime],
                     'EndValidTime': [final_endtime],
@@ -91,10 +90,10 @@ class FloodDefiner:
         else:
             # Return an empty GeoDataFrame if no events were found
             # Initialize an empty dataframe 
-            events_df = pd.DataFrame(columns=[f'ADM{adminLevel}', 'Event', 'StartValidTime', 'EndValidTime', 'geometry'])
+            events_df = pd.DataFrame(columns=[f'ADM{self.adminLevel}', 'Event', 'StartValidTime', 'EndValidTime', 'geometry'])
             return gpd.GeoDataFrame(events_df, geometry='geometry')
 
     def EventMaker(self, floodProbability_gdf, actionLifetime, triggerProb): 
         triggerstamped_gdf = self.stampTrigger (floodProbability_gdf, actionLifetime, triggerProb)
-        gdf = createEvent(triggerstamped_gdf)
+        gdf = self.createEvent(triggerstamped_gdf)
         return gdf

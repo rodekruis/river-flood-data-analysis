@@ -4,8 +4,8 @@ import pandas as pd
 import numpy as np
 from shapely.geometry import Point
 from scipy.spatial import cKDTree
-from vectorCheck import checkVectorFormat
-import batch_configuration as cfg 
+from GloFAS.GloFAS_prep.vectorCheck import checkVectorFormat
+import GloFAS.GloFAS_prep.configuration as cfg 
 
 def findclosestpoint(point_x, point_y, target_gdf):
     '''
@@ -29,6 +29,9 @@ def findclosestpoint(point_x, point_y, target_gdf):
     tree = cKDTree(target_coords)  # Build KDTree for fast nearest neighbor search
     dist, idx = tree.query([(point_x, point_y)], k=1)  # Find closest point
     return target_gdf.iloc[idx[0]]  # Return row of the closest point
+
+
+
 
 def matchPoints(
             vector_original, 
@@ -115,6 +118,80 @@ def matchPoints(
     match_df.to_csv(f'{StationDataDir}/matchpoints.csv', index=False)
     return match_df
 
+def attributePoints_to_Polygon(
+            vectorPolygon, 
+            vectorPoint, 
+            ID2, 
+            crs='EPSG:4326', 
+            StationDataDir=Path.cwd(),
+            filename='attributePoints_to_Polygon.csv'
+            ):
+    '''
+    Assigns points from vector_original to polygons in vector2, adding a new column in vector2 that contains the IDs of all points
+    from vector_original that fall within each polygon.
+
+    Parameters:
+    vectorPolygon : str or GeoDataFrame
+        The original vector data (file path or GeoDataFrame) containing the source polygon.
+    ID1 : str
+        Column name in vector_original identifying the points.
+    vectorPoint : str or GeoDataFrame
+        The target vector data (file path or GeoDataFrame) containing points.
+    ID2 : str
+        Column name in vector2 identifying the polygons.
+    crs : str, optional
+        Coordinate reference system for all data. Defaults to 'EPSG:4326'.
+    StationDataDir : str or Path, optional
+        Directory where the output CSV file will be saved. Default is the current working directory.
+
+    Writes:
+    CSV
+        A CSV file containing the polygon ID and the IDs of points within each polygon.
+
+    Returns:
+    GeoDataFrame
+        A GeoDataFrame containing the polygon data with an additional column for point IDs.
+    '''
+    
+    # Format input data into GeoDataFrames
+    points_gdf = checkVectorFormat(vectorPoint, 'point', crs)
+    polygons_gdf = checkVectorFormat(vectorPolygon, 'polygon', crs)
+
+    # Ensure the geometries are aligned with the same CRS
+    if points_gdf.crs != polygons_gdf.crs:
+        points_gdf = points_gdf.to_crs(polygons_gdf.crs)
+
+    # Initialize a new column in the polygons GeoDataFrame to store point IDs
+    polygons_gdf[f'{ID2}_in_polygon'] = None
+
+    # Loop through each polygon to find points within it
+    for idx, polygon_row in polygons_gdf.iterrows():
+        # Get the geometry of the current polygon
+        polygon_geom = polygon_row.geometry
+
+        # Find points that fall within this polygon
+        points_within = points_gdf[points_gdf.geometry.within(polygon_geom)]
+
+        # Collect the IDs of these points
+        point_ids = points_within[ID2].tolist()
+
+        # Update the GeoDataFrame with the list of point IDs
+        polygons_gdf.at[idx, f'{ID2}_in_polygon'] = point_ids
+
+    # Write the updated GeoDataFrame to a CSV file
+    output_file = StationDataDir / f'{filename}'
+    polygons_gdf.drop(columns='geometry').to_csv(output_file, index=False)
+
+    return polygons_gdf
 
 if __name__ == '__main__': 
-    matchPoints(cfg.GloFASstations, 'StationName', cfg.googlestations, 'gaugeId', crs=cfg.crs, StationDataDir=cfg.stationsDir)
+        result = attributePoints_to_Polygon(
+        cfg.admPath, 
+        cfg.DNHstations, 
+        'Station', 
+        crs=cfg.crs, 
+        StationDataDir=cfg.stationsDir,
+        filename='DNHstations_in_ADM2.csv'
+        )
+    
+    # matchPoints(cfg.GloFASstations, 'StationName', cfg.googlestations, 'gaugeId', crs=cfg.crs, StationDataDir=cfg.stationsDir)

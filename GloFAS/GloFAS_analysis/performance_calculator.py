@@ -2,10 +2,11 @@ import pandas as pd
 import geopandas as gpd
 import numpy as np
 import unidecode
-import configuration as cfg
 import matplotlib.pyplot as plt
 from datetime import datetime, timedelta
 from GloFAS.GloFAS_analysis.flood_definer import FloodDefiner
+from GloFAS.GloFAS_prep.vectorCheck import checkVectorFormat
+import GloFAS.GloFAS_prep.configuration as cfg
 class PredictedToImpactPerformanceAnalyzer:
     def __init__(self, DataDir, RPyr, leadtime, impactDataPath, triggerProb, adminLevel, adminPath, startYear, endYear, years, PredictedEvents_gdf):
         """
@@ -195,4 +196,6 @@ if __name__=='__main__':
             floodProbability_gdf = checkVectorFormat (floodProbability_path)
             definer = FloodDefiner (cfg.adminLevel)
             PredictedEvents_gdf = definer.EventMaker (floodProbability_gdf, cfg.actionLifetime, cfg.triggerProb)
-            analyzer = PredictedToImpactPerformanceAnalyzer(cfg.DataDir, RPyr, leadtime, cfg.impact_csvPath, cfg.triggerProb, cfg.adminLevel, cfg.adminPath, cfg.startYear, cfg.endYear, cfg.years, )
+            analyzer = PredictedToImpactPerformanceAnalyzer(cfg.DataDir, RPyr, leadtime, cfg.impact_csvPath, cfg.triggerProb, cfg.adminLevel, cfg.admPath, cfg.startYear, cfg.endYear, cfg.years, PredictedEvents_gdf)
+            analyzer.matchImpact_and_Trigger()
+            analyzer.calculateCommunePerformance()
