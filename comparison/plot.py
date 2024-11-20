@@ -40,3 +40,9 @@ class Visualizer:
         filePath = f'{self.DataDir}/performance_metrics_RP{RPyr:.1f}_yr_leadtime{leadtime/24:.0f}.png'
         plt.savefig(filePath)
         plt.show()
+
+    def performance_over_param(self, DataDir, leadtimes=168, RPsyr=5): 
+        if isinstance (leadtimes, (list,np.array)) and isinstance(RPsyr, int):
+            for leadtime in leadtimes: 
+                
+        elif isinstance (RPsyr, (list,np.array)) and isinstance (leadtimes,int): 
