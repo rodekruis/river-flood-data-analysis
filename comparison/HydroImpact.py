@@ -5,7 +5,6 @@ from GloFAS.GloFAS_prep.accent_remover import remove_accents
 import scipy.stats as stats
 from comparison.pointMatching import attributePoints_to_Polygon
 
-
 def parse_date_with_fallback(date_str, year):
     try:
         # Try to parse the date with the given year
