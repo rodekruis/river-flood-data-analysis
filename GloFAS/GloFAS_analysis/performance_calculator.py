@@ -63,7 +63,7 @@ class PredictedToImpactPerformanceAnalyzer:
         match = self.impact_gdf[
                         (self.impact_gdf[f'ADM{self.adminLevel}'] == commune) & 
                         (self.impact_gdf['Start Date'] <= enddate ) &
-                        (self.impact_gdf['End Date'] >= startdate )
+                        (self.impact_gdf['Start Date'] >= startdate )
                         ]
         return 1 if not match.empty else 0
     def clean_and_add_GloFAS (self, PredictedEvents_gdf): 
@@ -127,7 +127,7 @@ class PredictedToImpactPerformanceAnalyzer:
         '''Check if impact that has happened in the commune between given dates is RECORDED by glofas.'''
         match = PredictedEvents_gdf[
                                 (PredictedEvents_gdf[f'ADM{self.adminLevel}'] == commune) & 
-                                (PredictedEvents_gdf['StartValidTime'] <= enddate ) &
+                                (PredictedEvents_gdf['StartValidTime'] <= startdate ) &
                                 (PredictedEvents_gdf['EndValidTime'] >= startdate) &
                                 (PredictedEvents_gdf['Event']==1)
                                 ]
@@ -199,3 +199,5 @@ if __name__=='__main__':
             analyzer = PredictedToImpactPerformanceAnalyzer(cfg.DataDir, RPyr, leadtime, cfg.impact_csvPath, cfg.triggerProb, cfg.adminLevel, cfg.admPath, cfg.startYear, cfg.endYear, cfg.years, PredictedEvents_gdf)
             analyzer.matchImpact_and_Trigger()
             analyzer.calculateCommunePerformance()
+
+            
