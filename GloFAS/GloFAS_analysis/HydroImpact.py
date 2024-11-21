@@ -1,10 +1,9 @@
 
 import GloFAS.GloFAS_prep.configuration as cfg
 import pandas as pd
-
+from GloFAS.GloFAS_prep.accent_remover import remove_accents
 import scipy.stats as stats
 from comparison.pointMatching import attributePoints_to_Polygon
-
 
 
 def parse_date_with_fallback(date_str, year):
@@ -57,6 +56,7 @@ def z_RP_station(HydroStations_RP_file, StationName, RP):
     z_RP = HydroStations_RP_df[HydroStations_RP_df['StationName'] == StationName][f'{RP}'].values
 
     return z_RP
+
 def QRP_fit (hydro_df, RP): 
 
     # 1. Extract the annual maximum discharge values
@@ -71,7 +71,7 @@ def QRP_fit (hydro_df, RP):
     return discharge_value
 
 
-def stampHydroTrigger(hydro_df, RP, HydroStations_RP_file, StationName): 
+def stampHydroTrigger(hydro_df, RP, StationName): 
     """
     Adds a 'trigger' column to the hydro_df DataFrame indicating whether the 'Value' exceeds the QRP threshold.
 
@@ -92,7 +92,7 @@ def stampHydroTrigger(hydro_df, RP, HydroStations_RP_file, StationName):
     Q_station = hydro_df["Value"] 
     
 
-    QRP= QRP_fit (hydro_df,RP)
+    QRP= QRP_fit (hydro_df, RP)
     #print (f"for {StationName} : return period Q= {QRP}")
     if not isinstance(QRP, (int, float)):
         raise ValueError(f"Expected QRP to be a scalar (int or float), but got {type(QRP)}.")
@@ -166,7 +166,7 @@ def createEvent(trigger_df):
         events_df = pd.DataFrame(columns=['Event', 'StartDate', 'EndDate'])
         return events_df
 
-def loop_over_stations(station_csv, DataDir, RP, HydroStations_RP_file, admPath): 
+def loop_over_stations(station_csv, DataDir, RP, admPath): 
     station_df = pd.read_csv (station_csv, header=0)
     #print (station_df.columns)
     hydrodir = rf"{DataDir}/DNHMali_2019\Q_stations"
@@ -181,25 +181,32 @@ def loop_over_stations(station_csv, DataDir, RP, HydroStations_RP_file, admPath)
         except: 
             print (f'no discharge measures found for station {StationName} in {BasinName}')
             continue
-        trigger_df = stampHydroTrigger (hydro_df, RP, HydroStations_RP_file, StationName)
+        trigger_df = stampHydroTrigger (hydro_df, RP, StationName)
         event_df = createEvent (trigger_df)
         event_df ['StationName'] = StationName
         all_events.append (event_df)
     
     #generate the gdf to merge with where the points are attributed to the respective administrative units
     
+
+    all_events_df = pd.concat (all_events, ignore_index=True)
+    print (all_events_df.columns)
     gdf_pointPolygon = attributePoints_to_Polygon (admPath, station_csv, 'StationName')
     print (gdf_pointPolygon.columns)
-    all_events_df = pd.concat (all_events, ignore_index=True)
-    hydro_events_df = gdf_pointPolygon.merge (all_events_df, on='StationName', how='left')
+    gdf_melt = gdf_pointPolygon.melt(id_vars=gdf_pointPolygon.columns.difference(['StationName', 'StationName_0', 'StationName_1', 'StationName_2']),
+                      value_vars=['StationName', 'StationName_0', 'StationName_1', 'StationName_2'],
+                      var_name='StationName_Type', value_name='StationName')
+    gdf_melt = gdf_melt.dropna(subset=['StationName'])
+
+    hydro_events_df = pd.merge (gdf_melt, all_events_df, on='StationName', how='inner')
     hydro_events_gdf = gpd.GeoDataFrame(hydro_events_df, geometry='geometry')    
     return hydro_events_gdf
 
 
 if __name__=="__main__": 
     DataDir = cfg.DataDir
-    station_csv = DataDir / f"DNHMali_2019/Stations_DNH.csv"
+    station_csv = cfg.DNHstations
     HydroStations_RP_file = DataDir / f"DNHMali_2019/HydroStations_RP.csv"
     #print (readcsv(f"{DataDir}/Données partagées - DNH Mali - 2019/Donne╠ües partage╠ües - DNH Mali - 2019/De╠übit du Niger a╠Ç Ansongo.csv"))
-    trigger_df = loop_over_stations (station_csv, DataDir, 5, HydroStations_RP_file, cfg.admPath)
-    print (trigger_df)
+    event_df = loop_over_stations (station_csv, DataDir, 5, cfg.admPath)
+    print (event_df)

@@ -6,6 +6,7 @@ from shapely.geometry import Point
 from scipy.spatial import cKDTree
 from GloFAS.GloFAS_prep.vectorCheck import checkVectorFormat
 import GloFAS.GloFAS_prep.configuration as cfg 
+from GloFAS.GloFAS_prep.accent_remover import remove_accents
 
 def findclosestpoint(point_x, point_y, target_gdf):
     '''
@@ -175,12 +176,14 @@ def attributePoints_to_Polygon(
         # Collect the IDs of these points
         point_ids = points_within[ID2].tolist()
         # Update the GeoDataFrame with the list of point IDs
-        print (len(point_ids))
-        polygons_gdf.at[idx, f'{ID2}'] = point_ids[0]
+        
         nrstations_inpolygon = len (point_ids)
+        if nrstations_inpolygon>0:
+            polygons_gdf.at[idx, f'{ID2}'] = remove_accents(point_ids[0])
         if nrstations_inpolygon>1: 
             for stationnr in range(nrstations_inpolygon):
-                polygons_gdf.at[idx, f'{ID2}_{stationnr}'] = point_ids[stationnr-1]
+                polygons_gdf.at[idx, f'{ID2}_{stationnr}'] = remove_accents(point_ids[stationnr-1])
+
     # Write the updated GeoDataFrame to a CSV file
     output_file = StationDataDir / f'{filename}'
     polygons_gdf.drop(columns='geometry').to_csv(output_file, index=False)
