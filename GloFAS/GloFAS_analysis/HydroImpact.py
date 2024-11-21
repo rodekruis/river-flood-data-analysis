@@ -193,12 +193,17 @@ def loop_over_stations(station_csv, DataDir, RP, admPath):
     print (all_events_df.columns)
     gdf_pointPolygon = attributePoints_to_Polygon (admPath, station_csv, 'StationName')
     print (gdf_pointPolygon.columns)
-    gdf_melt = gdf_pointPolygon.melt(id_vars=gdf_pointPolygon.columns.difference(['StationName', 'StationName_0', 'StationName_1', 'StationName_2']),
-                      value_vars=['StationName', 'StationName_0', 'StationName_1', 'StationName_2'],
-                      var_name='StationName_Type', value_name='StationName')
-    gdf_melt = gdf_melt.dropna(subset=['StationName'])
+    gdf_melt = gdf_pointPolygon.melt(
+        id_vars=gdf_pointPolygon.columns.difference(['StationName', 'StationName_0', 'StationName_1', 'StationName_2']),
+        value_vars=['StationName', 'StationName_0', 'StationName_1', 'StationName_2'],
+        var_name='StationName_Type',  # Temporary column indicating the source column
+        value_name='StationName_Merged'  # Use a unique column name here
+    )
+    gdf_melt = gdf_melt.dropna(subset=['StationName_Merged'])
 
-    hydro_events_df = pd.merge (gdf_melt, all_events_df, on='StationName', how='inner')
+    # Proceed with the merge
+    hydro_events_df = pd.merge(gdf_melt, all_events_df, left_on='StationName_Merged', right_on='StationName', how='inner')
+
     hydro_events_gdf = gpd.GeoDataFrame(hydro_events_df, geometry='geometry')    
     return hydro_events_gdf
 
@@ -208,5 +213,5 @@ if __name__=="__main__":
     station_csv = cfg.DNHstations
     HydroStations_RP_file = DataDir / f"DNHMali_2019/HydroStations_RP.csv"
     #print (readcsv(f"{DataDir}/Données partagées - DNH Mali - 2019/Donne╠ües partage╠ües - DNH Mali - 2019/De╠übit du Niger a╠Ç Ansongo.csv"))
-    event_df = loop_over_stations (station_csv, DataDir, 5, cfg.admPath)
-    print (event_df)
+    event_gdf = loop_over_stations (station_csv, DataDir, 5, cfg.admPath)
+    print (event_gdf)
