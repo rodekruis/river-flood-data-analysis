@@ -162,7 +162,7 @@ def attributePoints_to_Polygon(
         points_gdf = points_gdf.to_crs(polygons_gdf.crs)
 
     # Initialize a new column in the polygons GeoDataFrame to store point IDs
-    polygons_gdf[f'{ID2}_in_polygon'] = None
+    polygons_gdf[f'{ID2}'] = None
 
     # Loop through each polygon to find points within it
     for idx, polygon_row in polygons_gdf.iterrows():
@@ -174,21 +174,23 @@ def attributePoints_to_Polygon(
 
         # Collect the IDs of these points
         point_ids = points_within[ID2].tolist()
-
         # Update the GeoDataFrame with the list of point IDs
-        polygons_gdf.at[idx, f'{ID2}_in_polygon'] = point_ids
-
+        print (len(point_ids))
+        polygons_gdf.at[idx, f'{ID2}'] = point_ids[0]
+        nrstations_inpolygon = len (point_ids)
+        if nrstations_inpolygon>1: 
+            for stationnr in range(nrstations_inpolygon):
+                polygons_gdf.at[idx, f'{ID2}_{stationnr}'] = point_ids[stationnr-1]
     # Write the updated GeoDataFrame to a CSV file
     output_file = StationDataDir / f'{filename}'
     polygons_gdf.drop(columns='geometry').to_csv(output_file, index=False)
-
     return polygons_gdf
 
 if __name__ == '__main__': 
         result = attributePoints_to_Polygon(
         cfg.admPath, 
         cfg.DNHstations, 
-        'Station', 
+        'StationName', 
         crs=cfg.crs, 
         StationDataDir=cfg.stationsDir,
         filename='DNHstations_in_ADM2.csv'

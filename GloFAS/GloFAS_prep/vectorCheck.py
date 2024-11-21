@@ -76,6 +76,12 @@ def checkVectorFormat(vector, shapeType=None, crs='EPSG:4326', placement='real')
                             geometry=gpd.points_from_xy(df['longitude'], df['latitude']),
                             crs=crs
                             )
+                    elif {'Longitude W (°)', 'Latitude  N  (°)'}.issubset(df.columns):
+                        vectorGDF = gpd.GeoDataFrame(
+                            df,
+                            geometry=gpd.points_from_xy(df['Longitude W (°)'], df['Latitude  N  (°)']),
+                            crs=crs
+                            )
                     else: 
                         raise ValueError ("Column names corresponding to longitude latitude cannot be found (maybe you would like to add more? :)) ")
                 elif placement=='model': 
