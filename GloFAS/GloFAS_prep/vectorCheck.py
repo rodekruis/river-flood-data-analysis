@@ -6,6 +6,13 @@ from rasterstats import zonal_stats
 from shapely import wkt
 import rioxarray as rio
 
+def df_from_txt_or_csv (vector): 
+    if vector.endswith ('.csv'):
+        df = pd.read_csv(vector)
+    elif vector.endswith ('.txt'):
+        df = pd.read_csv (vector, sep="; ", header=0)
+    return df
+
 def checkVectorFormat(vector, shapeType=None, crs='EPSG:4326', placement='real'):
     ''' 
     Transforms various forms of vector inputs into a proper GeoDataFrame.
@@ -33,10 +40,9 @@ def checkVectorFormat(vector, shapeType=None, crs='EPSG:4326', placement='real')
         # Check file extensions and load accordingly
         if vector.endswith(('.shp', '.gpkg')):
             vectorGDF = gpd.read_file(vector).to_crs(crs)
-        
-        elif vector.endswith('.csv'):
+        elif vector.endswith(('.csv', '.txt')):
             # Load CSV and convert to GeoDataFrame based on shapeType
-            df = pd.read_csv(vector)
+            df = df_from_txt_or_csv (vector)
             if shapeType=='point':
                 if placement=='real': # default
                     # Some options describing columns describing placement in COORDINATES: ADD MORE in case your column name is not there
@@ -52,6 +58,12 @@ def checkVectorFormat(vector, shapeType=None, crs='EPSG:4326', placement='real')
                             geometry=gpd.points_from_xy(df['x'], df['y']),
                             crs=crs
                             ) 
+                    elif {'Lon', 'Lat'}.issubset(df.columns):
+                        vectorGDF = gpd.GeoDataFrame(
+                            df,
+                            geometry=gpd.points_from_xy(df['Lon'], df['Lat']),
+                            crs=crs
+                            ) 
                     elif {'StationLon', 'StationLat'}.issubset(df.columns):
                         vectorGDF = gpd.GeoDataFrame(
                             df,
@@ -62,6 +74,12 @@ def checkVectorFormat(vector, shapeType=None, crs='EPSG:4326', placement='real')
                         vectorGDF = gpd.GeoDataFrame(
                             df,
                             geometry=gpd.points_from_xy(df['longitude'], df['latitude']),
+                            crs=crs
+                            )
+                    elif {'Longitude W (°)', 'Latitude  N  (°)'}.issubset(df.columns):
+                        vectorGDF = gpd.GeoDataFrame(
+                            df,
+                            geometry=gpd.points_from_xy(df['Longitude W (°)'], df['Latitude  N  (°)']),
                             crs=crs
                             )
                     else: 
@@ -98,3 +116,5 @@ def checkVectorFormat(vector, shapeType=None, crs='EPSG:4326', placement='real')
     
     
     return vectorGDF
+
+

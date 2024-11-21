@@ -2,6 +2,7 @@ from pathlib import Path
 import numpy as np
 import math
 import os
+################################ GLOFAS ###############################################
 
 os.chdir (f'C:\\Users\\els-2\\') 
 cur = Path.cwd() 
@@ -15,7 +16,7 @@ cerclePath = DataDir / f"Visualization/mli_admbnda_adm2_1m_gov_20211220.shp"
 adminPaths = [regionPath, cerclePath, communePath]
 lakesPath = DataDir / f'Visualization/waterbodies/waterbodies_merged.shp'
 stationsDir = DataDir / f'stations'
-
+DNHstations = stationsDir / f"Stations_DNH.csv"
 googlestations = stationsDir / 'coords_google_gauges_Mali.csv'
 GloFASstations = stationsDir / 'GloFAS_MaliStations_v4.csv'
 impact_csvPath = DataDir / "impact/MergedImpactData.csv"
@@ -23,7 +24,7 @@ settlements_tif = DataDir / "GlobalHumanSettlement/GHS_BUILT_S_E2030_GLOBE_R2023
 
 crs = f'EPSG:4326' 
 RPsyr = [1.5, 2.0, 5.0, 10.0] # return period threshold in years 
-leadtimes = 168 # hours
+leadtimes = [72, 96, 120,144, 168] # hours
 startYear = 2004 
 endYear = 2023 # 00:00 1st of january of that year, so up to but not including
 triggerProb = 0.6
@@ -31,5 +32,5 @@ actionLifetime = 10 #days
 adminLevel = 2 # choose level on which you would like to aggregate : 1,2,3
 years = np.arange(startYear, endYear, 1)
 admPath = adminPaths [(adminLevel-1)] # generate the useful administrative unit path 
-nrCores = 6 #determine number of cpu cores to use
-measure = 'max' # measure to aggregate on 
+nrCores = 4 #determine number of cpu cores to use (check your local device or the maximum allowed by your virtual computer)
+measure = 'max' # measure to aggregate on :) 

@@ -56,7 +56,7 @@ def query(rasterDA, pointGDF):
     pointGDF['rastervalue'] = [
         rasterDA.sel(latitude=lat, longitude=lon, method='nearest').values.item()  # Get scalar value
         for lat, lon in zip(point_latitude, point_longitude)
-    ]
+        ]
     
     return pointGDF
 
