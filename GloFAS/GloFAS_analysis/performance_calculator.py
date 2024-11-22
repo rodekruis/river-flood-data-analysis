@@ -9,7 +9,7 @@ from comparison.HydroImpact import loop_over_stations
 from GloFAS.GloFAS_prep.vectorCheck import checkVectorFormat
 import GloFAS.GloFAS_prep.configuration as cfg
 class PredictedToImpactPerformanceAnalyzer:
-    def __init__(self, DataDir, RPyr, leadtime, impactData, triggerProb, adminLevel, adminPath, startYear, endYear, years, PredictedEvents_gdf):
+    def __init__(self, DataDir, RPyr, leadtime, impactData, triggerProb, adminLevel, adminPath, startYear, endYear, years, PredictedEvents_gdf, comparisonType):
         """
         Initialize the FloodPerformanceAnalyzer class with the required data.
         
@@ -19,7 +19,6 @@ class PredictedToImpactPerformanceAnalyzer:
                                         should make this a csv possiblity
             triggerProb (float): Probability threshold to classify flood triggers.
         """
-
         self.triggerProb = triggerProb
         self.adminLevel = adminLevel
         self.gdf_shape = gpd.read_file(adminPath)
@@ -31,7 +30,8 @@ class PredictedToImpactPerformanceAnalyzer:
         self.years = years
         self.impactData = impactData
         self.PredictedEvents_gdf = PredictedEvents_gdf
-        if isinstance (self.impactData, (str, Path)):
+        self.comparisonType = comparisonType
+        if isinstance (self.impactData, (str)):
             self.impact_gdf = self.openObservedImpact_gdf()
         elif isinstance (self.impactData, gpd.GeoDataFrame):
             self.impact_gdf = self.impactData
@@ -40,7 +40,10 @@ class PredictedToImpactPerformanceAnalyzer:
         
     def openObservedImpact_gdf(self):
         # Load the data
-        df = pd.read_csv(self.impactDataPath)
+        if self.impactData.endswith('.csv'):
+            df = pd.read_csv(self.impactData)
+        else: 
+            df = gpd.read_file(self.impactData)
 
         # Convert 'End Date' and 'Start Date' to datetime
         df['End Date'] = pd.to_datetime(df['End Date'], format='%d/%m/%Y', errors='coerce')
@@ -48,7 +51,7 @@ class PredictedToImpactPerformanceAnalyzer:
 
         # Filter rows between 2004 and 2022 ()
         df_filtered = df[(df['End Date'].dt.year >= self.startYear) & (df['End Date'].dt.year < self.endYear)]
-
+        
         # Remove non-string entries from ADM columns
         df_filtered = df_filtered[df_filtered[f'ADM{self.adminLevel}'].apply(lambda x: isinstance(x, str))]
         self.gdf_shape = self.gdf_shape[self.gdf_shape[f'ADM{self.adminLevel}_FR'].apply(lambda x: isinstance(x, str))]
@@ -57,6 +60,7 @@ class PredictedToImpactPerformanceAnalyzer:
         self.gdf_shape.rename(columns={f'ADM{cfg.adminLevel}_FR':f'ADM{cfg.adminLevel}'}, inplace=True)
         self.gdf_shape[f'ADM{cfg.adminLevel}'] = self.gdf_shape[f'ADM{cfg.adminLevel}'].apply(lambda x: unidecode.unidecode(x).upper())
         # Apply normalization to both DataFrames (converting to uppercase and removing special characters)
+        
         df_filtered[f'ADM{self.adminLevel}'] = df_filtered[f'ADM{self.adminLevel}'].apply(lambda x: unidecode.unidecode(x).upper())
         
         # Merge the CSV data with the shapefile data
@@ -136,6 +140,7 @@ class PredictedToImpactPerformanceAnalyzer:
                                 (PredictedEvents_gdf['EndValidTime'] >= startdate) &
                                 (PredictedEvents_gdf['Event']==1)
                                 ]
+        print (match)
         return 1 if not match.empty else 0
 
     
@@ -187,16 +192,20 @@ class PredictedToImpactPerformanceAnalyzer:
         Calculate the performance scores for each commune and merge them back into the GeoDataFrame.
         """
         # Group by 'Commune' and calculate performance scores for each group
+        print (self.impact_gdf.columns)
+        print (self.impact_gdf.head)
+        
         scores_by_commune = self.impact_gdf.groupby(f'ADM{self.adminLevel}').apply(
-            lambda x: self.calc_performance_scores(x['Impact'], x['Event'])
+            lambda x: self.calc_performance_scores(x[f'{self.comparisonType}'], x['Event'])
         )
         scores_byCommune_gdf = self.gdf_shape.merge(scores_by_commune, on=f'ADM{cfg.adminLevel}')
-        scores_byCommune_gdf.to_file (f"{self.DataDir}/glofas_to_hydrodata/scores_byCommuneRP{self.RPyr:.1f}_yr_leadtime{self.leadtime:.0f}.shp")
+        scores_byCommune_gdf.to_file (f"{self.DataDir}/{comparisonType}/scores_byCommuneRP{self.RPyr:.1f}_yr_leadtime{self.leadtime:.0f}.shp")
         return scores_byCommune_gdf
 
 if __name__=='__main__':
     for RPyr in cfg.RPsyr: 
-        hydro_impact_gdf = loop_over_stations (cfg.DNHstations , cfg.DataDir, RPyr, cfg.admPath)
+        hydro_impact_gdf = f'{cfg.DataDir}/Impact_from_hydro_RP_{RPyr}.gpkg'
+        #hydro_impact_gdf = loop_over_stations (cfg.DNHstations , cfg.DataDir, RPyr, cfg.admPath, cfg.adminLevel)
         for leadtime in cfg.leadtimes: 
             floodProbability_path = cfg.DataDir/ f"floodedRP{RPyr}yr_leadtime{leadtime}_ADM{cfg.adminLevel}.gpkg"
             floodProbability_gdf = checkVectorFormat (floodProbability_path)
@@ -204,7 +213,7 @@ if __name__=='__main__':
             definer = FloodDefiner (cfg.adminLevel)
             PredictedEvents_gdf = definer.EventMaker (floodProbability_gdf, cfg.actionLifetime, cfg.triggerProb)
         #print (readcsv(f"{DataDir}/Données partagées - DNH Mali - 2019/Donne╠ües partage╠ües - DNH Mali - 2019/De╠übit du Niger a╠Ç Ansongo.csv"))
-            analyzer = PredictedToImpactPerformanceAnalyzer(cfg.DataDir, RPyr, leadtime, hydro_impact_gdf, cfg.triggerProb, cfg.adminLevel, cfg.admPath, cfg.startYear, cfg.endYear, cfg.years, PredictedEvents_gdf)
+            analyzer = PredictedToImpactPerformanceAnalyzer(cfg.DataDir, RPyr, leadtime, hydro_impact_gdf, cfg.triggerProb, cfg.adminLevel, cfg.admPath, cfg.startYear, cfg.endYear, cfg.years, PredictedEvents_gdf, 'Observation')
             analyzer.matchImpact_and_Trigger()
             analyzer.calculateCommunePerformance()
 
