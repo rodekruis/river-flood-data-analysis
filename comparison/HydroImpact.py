@@ -1,10 +1,10 @@
 
 import GloFAS.GloFAS_prep.configuration as cfg
 import pandas as pd
-from GloFAS.GloFAS_prep.accent_remover import remove_accents
+from GloFAS.GloFAS_prep.text_formatter import remove_accents, capitalize
 import scipy.stats as stats
 from comparison.pointMatching import attributePoints_to_Polygon
-
+import geopandas as gpd
 def parse_date_with_fallback(date_str, year):
     try:
         # Try to parse the date with the given year
@@ -64,7 +64,6 @@ def QRP_fit (hydro_df, RP):
 
     # 2. Fit a Gumbel distribution to the annual maximum discharge values
     loc, scale = stats.gumbel_r.fit(annual_max_discharge)
-    print (RP)
     # 4. Calculate the discharge value corresponding to the return period
     discharge_value = stats.gumbel_r.ppf(1 - 1/RP, loc, scale)
     return discharge_value
@@ -143,8 +142,8 @@ def createEvent(trigger_df):
             # Create a temporary dataframe for the current event
             temp_event_df = pd.DataFrame({
                 'Event': [Event],
-                'StartDate': [StartDate],
-                'EndDate': [final_endtime],
+                'Start Date': [StartDate],
+                'End Date': [final_endtime],
             })
             
             # Append the event to the list of events
@@ -165,7 +164,7 @@ def createEvent(trigger_df):
         events_df = pd.DataFrame(columns=['Event', 'Start Date', 'End Date'])
         return events_df
 
-def loop_over_stations(station_csv, DataDir, RP, admPath): 
+def loop_over_stations(station_csv, DataDir, RP, admPath, adminLevel): 
     RP = float(RP)
     station_df = pd.read_csv (station_csv, header=0)
     #print (station_df.columns)
@@ -189,11 +188,10 @@ def loop_over_stations(station_csv, DataDir, RP, admPath):
     
     #generate the gdf to merge with where the points are attributed to the respective administrative units
     
-
     all_events_df = pd.concat (all_events, ignore_index=True)
-    print (all_events_df.columns)
+    
     gdf_pointPolygon = attributePoints_to_Polygon (admPath, station_csv, 'StationName')
-    print (gdf_pointPolygon.columns)
+    gdf_pointPolygon.rename(columns={f'ADM{adminLevel}_FR':f'ADM{adminLevel}'}, inplace=True)
     gdf_melt = gdf_pointPolygon.melt(
         id_vars=gdf_pointPolygon.columns.difference(['StationName', 'StationName_0', 'StationName_1', 'StationName_2']),
         value_vars=['StationName', 'StationName_0', 'StationName_1', 'StationName_2'],
@@ -204,12 +202,13 @@ def loop_over_stations(station_csv, DataDir, RP, admPath):
 
     # Proceed with the merge
     hydro_events_df = pd.merge(gdf_melt, all_events_df, left_on='StationName_Merged', right_on='StationName', how='inner')
-
-    hydro_events_gdf = gpd.GeoDataFrame(hydro_events_df, geometry='geometry')    
+    hydro_events_df [f'ADM{adminLevel}'] = hydro_events_df [f'ADM{adminLevel}'].apply(capitalize)
+    hydro_events_gdf = gpd.GeoDataFrame(hydro_events_df, geometry='geometry')   
+    hydro_events_gdf.to_file(f"{DataDir}/Impact_from_hydro_RP_{RP}.gpkg")
     return hydro_events_gdf
 
 
 if __name__=="__main__": 
     #print (readcsv(f"{DataDir}/Données partagées - DNH Mali - 2019/Donne╠ües partage╠ües - DNH Mali - 2019/De╠übit du Niger a╠Ç Ansongo.csv"))
-    event_gdf = loop_over_stations (cfg.DNHstations, cfg.DataDir, 5, cfg.admPath)
+    event_gdf = loop_over_stations (cfg.DNHstations, cfg.DataDir, 5, cfg.admPath, cfg.adminLevel)
     print (event_gdf)

@@ -19,7 +19,6 @@ class PredictedToImpactPerformanceAnalyzer:
                                         should make this a csv possiblity
             triggerProb (float): Probability threshold to classify flood triggers.
         """
-
         self.triggerProb = triggerProb
         self.adminLevel = adminLevel
         self.gdf_shape = gpd.read_file(adminPath)
@@ -31,7 +30,7 @@ class PredictedToImpactPerformanceAnalyzer:
         self.years = years
         self.impactData = impactData
         self.PredictedEvents_gdf = PredictedEvents_gdf
-        if isinstance (self.impactData, (str, Path)):
+        if isinstance (self.impactData, (str)):
             self.impact_gdf = self.openObservedImpact_gdf()
         elif isinstance (self.impactData, gpd.GeoDataFrame):
             self.impact_gdf = self.impactData
@@ -187,6 +186,8 @@ class PredictedToImpactPerformanceAnalyzer:
         Calculate the performance scores for each commune and merge them back into the GeoDataFrame.
         """
         # Group by 'Commune' and calculate performance scores for each group
+        print (self.impact_gdf.columns)
+        print (self.impact_gdf.head)
         scores_by_commune = self.impact_gdf.groupby(f'ADM{self.adminLevel}').apply(
             lambda x: self.calc_performance_scores(x['Impact'], x['Event'])
         )
