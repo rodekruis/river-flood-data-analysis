@@ -141,7 +141,7 @@ def attributePoints_to_Polygon(
         Column name in vector2 identifying the polygons.
     crs : str, optional
         Coordinate reference system for all data. Defaults to 'EPSG:4326'.
-    buffer_distance : float, optional
+    border_tolerance : float, optional
         Distance in meters to expand the polygons for including nearby points. Defaults to 5000 (5 km).
     StationDataDir : str or Path, optional
         Directory where the output CSV file will be saved. Default is the current working directory.
@@ -165,7 +165,7 @@ def attributePoints_to_Polygon(
 
     # Apply a buffer to the polygons
     expanded_polygons_gdf = polygons_gdf.copy()
-    expanded_polygons_gdf['geometry'] = expanded_polygons_gdf.geometry.buffer(buffer_distance)
+    expanded_polygons_gdf['geometry'] = expanded_polygons_gdf.geometry.buffer(border_tolerance)
 
     # Initialize a new column in the polygons GeoDataFrame to store point IDs
     polygons_gdf[f'{ID2}'] = None

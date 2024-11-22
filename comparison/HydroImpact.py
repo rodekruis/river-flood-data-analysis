@@ -141,7 +141,7 @@ def createEvent(trigger_df):
                 
             # Create a temporary dataframe for the current event
             temp_event_df = pd.DataFrame({
-                'Event': [Event],
+                'Observation': [Event],
                 'Start Date': [StartDate],
                 'End Date': [final_endtime],
             })
@@ -161,7 +161,7 @@ def createEvent(trigger_df):
     else:
         # Return an empty GeoDataFrame if no events were found
         # Initialize an empty dataframe 
-        events_df = pd.DataFrame(columns=['Event', 'Start Date', 'End Date'])
+        events_df = pd.DataFrame(columns=['Observation', 'Start Date', 'End Date'])
         return events_df
 
 def loop_over_stations(station_csv, DataDir, RP, admPath, adminLevel): 
