@@ -19,6 +19,7 @@ from .plots import plot_forecast_min_mean_max
 from .plots import plot_Niger_river_downstream_flow_stat
 from .plots import plot_reforecast
 from .plots import plot_reanalysis
+from .plots import add_return_periods
 from .tests import assert_same_coord_system
 
 print('GoogleFloodHub-data-analyser initialized\n')
