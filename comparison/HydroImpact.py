@@ -64,7 +64,7 @@ def QRP_fit (hydro_df, RP):
 
     # 2. Fit a Gumbel distribution to the annual maximum discharge values
     loc, scale = stats.gumbel_r.fit(annual_max_discharge)
-
+    print (RP)
     # 4. Calculate the discharge value corresponding to the return period
     discharge_value = stats.gumbel_r.ppf(1 - 1/RP, loc, scale)
     return discharge_value
@@ -162,10 +162,11 @@ def createEvent(trigger_df):
     else:
         # Return an empty GeoDataFrame if no events were found
         # Initialize an empty dataframe 
-        events_df = pd.DataFrame(columns=['Event', 'StartDate', 'EndDate'])
+        events_df = pd.DataFrame(columns=['Event', 'Start Date', 'End Date'])
         return events_df
 
 def loop_over_stations(station_csv, DataDir, RP, admPath): 
+    RP = float(RP)
     station_df = pd.read_csv (station_csv, header=0)
     #print (station_df.columns)
     hydrodir = rf"{DataDir}/DNHMali_2019\Q_stations"
@@ -180,6 +181,7 @@ def loop_over_stations(station_csv, DataDir, RP, admPath):
         except: 
             print (f'no discharge measures found for station {StationName} in {BasinName}')
             continue
+
         trigger_df = stampHydroTrigger (hydro_df, RP, StationName)
         event_df = createEvent (trigger_df)
         event_df ['StationName'] = StationName
@@ -208,9 +210,6 @@ def loop_over_stations(station_csv, DataDir, RP, admPath):
 
 
 if __name__=="__main__": 
-    DataDir = cfg.DataDir
-    station_csv = cfg.DNHstations
-    HydroStations_RP_file = DataDir / f"DNHMali_2019/HydroStations_RP.csv"
     #print (readcsv(f"{DataDir}/Données partagées - DNH Mali - 2019/Donne╠ües partage╠ües - DNH Mali - 2019/De╠übit du Niger a╠Ç Ansongo.csv"))
-    event_gdf = loop_over_stations (station_csv, DataDir, 5, cfg.admPath)
+    event_gdf = loop_over_stations (cfg.DNHstations, cfg.DataDir, 5, cfg.admPath)
     print (event_gdf)

@@ -5,6 +5,7 @@ import unidecode
 import matplotlib.pyplot as plt
 from datetime import datetime, timedelta
 from GloFAS.GloFAS_analysis.flood_definer import FloodDefiner
+from comparison.HydroImpact import loop_over_stations
 from GloFAS.GloFAS_prep.vectorCheck import checkVectorFormat
 import GloFAS.GloFAS_prep.configuration as cfg
 class PredictedToImpactPerformanceAnalyzer:
@@ -127,7 +128,7 @@ class PredictedToImpactPerformanceAnalyzer:
         # Append the renamed rows to impact_gdf
         self.impact_gdf = pd.concat([self.impact_gdf, remaining_rows], ignore_index=True)
 
-    def _check_impact(self, PredictedEvents_gdf, commune, startdate, enddate):
+    def _check_impact(self, PredictedEvents_gdf, commune, startdate):
         '''Check if impact that has happened in the commune between given dates is RECORDED by glofas.'''
         match = PredictedEvents_gdf[
                                 (PredictedEvents_gdf[f'ADM{self.adminLevel}'] == commune) & 
@@ -148,7 +149,7 @@ class PredictedToImpactPerformanceAnalyzer:
         # Add Impact column using the check impact date (which only works on the impact gdf)
         
         self.impact_gdf['Event'] = self.impact_gdf.apply(
-            lambda row: self._check_impact(self.PredictedEvents_gdf, row[f'ADM{self.adminLevel}'], row['Start Date'], row['End Date']),
+            lambda row: self._check_impact(self.PredictedEvents_gdf, row[f'ADM{self.adminLevel}'], row['Start Date']),
             axis=1
         )
         # Clean and add GloFAS to self.impact_gdf
@@ -194,17 +195,15 @@ class PredictedToImpactPerformanceAnalyzer:
         return scores_byCommune_gdf
 
 if __name__=='__main__':
-    station_csv = cfg.DNHstations 
-    for leadtime in cfg.leadtimes: 
-        for RPyr in cfg.RPsyr: 
+    for RPyr in cfg.RPsyr: 
+        hydro_impact_gdf = loop_over_stations (cfg.DNHstations , cfg.DataDir, RPyr, cfg.admPath)
+        for leadtime in cfg.leadtimes: 
             floodProbability_path = cfg.DataDir/ f"floodedRP{RPyr}yr_leadtime{leadtime}_ADM{cfg.adminLevel}.gpkg"
             floodProbability_gdf = checkVectorFormat (floodProbability_path)
+            #calculate the flood events
             definer = FloodDefiner (cfg.adminLevel)
             PredictedEvents_gdf = definer.EventMaker (floodProbability_gdf, cfg.actionLifetime, cfg.triggerProb)
-            
-    
         #print (readcsv(f"{DataDir}/Données partagées - DNH Mali - 2019/Donne╠ües partage╠ües - DNH Mali - 2019/De╠übit du Niger a╠Ç Ansongo.csv"))
-            hydro_impact_gdf = loop_over_stations (station_csv, DataDir, RPyr, cfg.admPath)
             analyzer = PredictedToImpactPerformanceAnalyzer(cfg.DataDir, RPyr, leadtime, hydro_impact_gdf, cfg.triggerProb, cfg.adminLevel, cfg.admPath, cfg.startYear, cfg.endYear, cfg.years, PredictedEvents_gdf)
             analyzer.matchImpact_and_Trigger()
             analyzer.calculateCommunePerformance()
