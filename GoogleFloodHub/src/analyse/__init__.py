@@ -5,6 +5,7 @@ __author__ = 'valentijn7' # GitHub username
 
 print('\nRunning __init__.py for GoogleFloodHub-data-analyser')
 
+from. aggregate import aggregate_per_admin_unit
 from .getters import get_country_data
 from .getters import get_country_polygon
 from .getters import get_shape_file
