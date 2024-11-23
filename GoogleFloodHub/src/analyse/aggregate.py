@@ -3,6 +3,7 @@
 # Functions to aggregate data per gauge to data per administrative unit
 
 from typing import Dict
+import pandas as pd
 import xarray as xr
 
 
