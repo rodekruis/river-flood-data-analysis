@@ -410,7 +410,8 @@ def plot_Niger_river_downstream_flow_stat(
 
 
 def add_return_periods(
-        ax: mpl.axes, gauge_return_periods_ds: xr.core.dataset.Dataset, thresholds: Tuple[int]
+        ax: mpl.axes, gauge_return_periods_ds: xr.core.dataset.Dataset,
+        thresholds: Tuple[int], set_legend: bool = True
     ) -> None:
     """
     Adds horizontal lines with return periods to a plot
@@ -425,7 +426,7 @@ def add_return_periods(
         ax.axhline(
             y = gauge_return_periods_ds[f'return_period_{threshold}'].item(),
             color = color,
-            label = f'{threshold}-yr return period',
+            label = f'{threshold}-yr return period' if set_legend else None,
             linestyle = '--'
         )
 
