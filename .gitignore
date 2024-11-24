@@ -4,9 +4,8 @@ __pycache__/
 # ignore API keys
 key.txt
 
-# ignore certain .csv/.xlsx files
-impact_data_Mali.xlsx
-impact_data_Mali.csv
+# ignore certain .csv files
+
 
 # ignore experimentation notebooks
 extract.ipynb
