@@ -176,7 +176,6 @@ def loop_over_stations(station_csv, DataDir, RP, admPath, adminLevel):
         stationPath = rf"{hydrodir}/{BasinName}_{StationName}.csv"
         try: 
             hydro_df = transform_hydro (stationPath)
-            
         except: 
             print (f'no discharge measures found for station {StationName} in {BasinName}')
             continue
@@ -190,7 +189,7 @@ def loop_over_stations(station_csv, DataDir, RP, admPath, adminLevel):
     
     all_events_df = pd.concat (all_events, ignore_index=True)
     
-    gdf_pointPolygon = attributePoints_to_Polygon (admPath, station_csv, 'StationName')
+    gdf_pointPolygon = attributePoints_to_Polygon (admPath, station_csv, 'StationName', border_tolerance=5000, StationDataDir=cfg.stationsDir)
     gdf_pointPolygon.rename(columns={f'ADM{adminLevel}_FR':f'ADM{adminLevel}'}, inplace=True)
     gdf_melt = gdf_pointPolygon.melt(
         id_vars=gdf_pointPolygon.columns.difference(['StationName', 'StationName_0', 'StationName_1', 'StationName_2']),
@@ -203,12 +202,14 @@ def loop_over_stations(station_csv, DataDir, RP, admPath, adminLevel):
     # Proceed with the merge
     hydro_events_df = pd.merge(gdf_melt, all_events_df, left_on='StationName_Merged', right_on='StationName', how='inner')
     hydro_events_df [f'ADM{adminLevel}'] = hydro_events_df [f'ADM{adminLevel}'].apply(capitalize)
+    hydro_events_df.to_csv (f"{DataDir}/observation/observational_flood_events_RP_{RP}yr.csv")
     hydro_events_gdf = gpd.GeoDataFrame(hydro_events_df, geometry='geometry')   
-    hydro_events_gdf.to_file(f"{DataDir}/Impact_from_hydro_RP_{RP}.gpkg")
+    hydro_events_gdf.to_file(f"{DataDir}/observation/observational_flood_events_RP_{RP}yr.gpkg")
+    hydro_events_gdf.to_file
     return hydro_events_gdf
 
 
 if __name__=="__main__": 
-    #print (readcsv(f"{DataDir}/Données partagées - DNH Mali - 2019/Donne╠ües partage╠ües - DNH Mali - 2019/De╠übit du Niger a╠Ç Ansongo.csv"))
-    event_gdf = loop_over_stations (cfg.DNHstations, cfg.DataDir, 5, cfg.admPath, cfg.adminLevel)
-    print (event_gdf)
+    for RP in cfg.RPsyr: 
+        #print (readcsv(f"{DataDir}/Données partagées - DNH Mali - 2019/Donne╠ües partage╠ües - DNH Mali - 2019/De╠übit du Niger a╠Ç Ansongo.csv"))
+        event_gdf = loop_over_stations (cfg.DNHstations, cfg.DataDir, RP, cfg.admPath, cfg.adminLevel)
