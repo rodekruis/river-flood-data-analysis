@@ -121,14 +121,14 @@ def attributePoints_to_Polygon(
         vectorPolygon, 
         vectorPoint, 
         ID2, 
-        local_crs='EPSG:4326', 
+        crs='EPSG:4326', 
         buffer_distance_meters=5000,  
         StationDataDir=Path.cwd(), 
         filename='attributePoints_to_Polygon.csv'
     ):
     # Format input data into GeoDataFrames
-    points_gdf = checkVectorFormat(vectorPoint, 'point', local_crs)
-    polygons_gdf = checkVectorFormat(vectorPolygon, 'polygon', local_crs)
+    points_gdf = checkVectorFormat(vectorPoint, 'point', crs)
+    polygons_gdf = checkVectorFormat(vectorPolygon, 'polygon', crs)
 
     # Ensure the geometries are aligned with the same CRS
     if points_gdf.crs != polygons_gdf.crs:
@@ -143,8 +143,8 @@ def attributePoints_to_Polygon(
     expanded_polygons_gdf = polygons_gdf.copy()
     expanded_polygons_gdf['geometry'] = expanded_polygons_gdf.geometry.buffer(buffer_distance_degrees)
 
-    # Initialize a column to store point IDs
-    polygons_gdf[f'{ID2}_list'] = None
+    # Initialize a dictionary to track max number of stations per polygon
+    max_stations = 0
 
     # Loop through each polygon to find points within it
     for idx, polygon_row in expanded_polygons_gdf.iterrows():
@@ -157,9 +157,19 @@ def attributePoints_to_Polygon(
         # Collect the IDs of these points
         point_ids = points_within[ID2].tolist()
 
-        # Store the station names as a comma-separated string
-        if point_ids:
-            polygons_gdf.at[idx, f'{ID2}_list'] = ', '.join(remove_accents(name) for name in point_ids)
+        # Add dynamic columns for each point
+        for i, point_id in enumerate(point_ids, start=1):
+            column_name = f'{ID2}_{i}'
+            polygons_gdf.at[idx, column_name] = remove_accents(point_id)
+
+        # Track the maximum number of stations for column consistency
+        max_stations = max(max_stations, len(point_ids))
+
+    # Fill missing columns with NaN for polygons with fewer stations
+    for i in range(1, max_stations + 1):
+        column_name = f'{ID2}_{i}'
+        if column_name not in polygons_gdf.columns:
+            polygons_gdf[column_name] = None
 
     # Write the updated GeoDataFrame to a CSV file
     output_file = StationDataDir / filename
@@ -168,16 +178,15 @@ def attributePoints_to_Polygon(
     return polygons_gdf
 
 
-
 if __name__ == '__main__': 
     result = attributePoints_to_Polygon(
-    cfg.admPath, 
-    cfg.DNHstations, 
-    'StationName',  
-    local_crs=cfg.crs,
-    buffer_distance_meters=5000, # to tolerate the bolder 
-    StationDataDir=cfg.stationsDir,
-    filename='DNHstations_in_ADM2.csv'
-    )
+        cfg.admPath, 
+        cfg.DNHstations, 
+        'StationName',  
+        crs=cfg.crs,
+        buffer_distance_meters=5000, # to tolerate the bolder 
+        StationDataDir=cfg.stationsDir,
+        filename='DNHstations_in_ADM2.csv'
+        )
     
     # matchPoints(cfg.GloFASstations, 'StationName', cfg.googlestations, 'gaugeId', crs=cfg.crs, StationDataDir=cfg.stationsDir)

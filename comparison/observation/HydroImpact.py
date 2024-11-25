@@ -189,11 +189,11 @@ def loop_over_stations(station_csv, DataDir, RP, admPath, adminLevel):
     
     all_events_df = pd.concat (all_events, ignore_index=True)
     
-    gdf_pointPolygon = attributePoints_to_Polygon (admPath, station_csv, 'StationName', border_tolerance=5000, StationDataDir=cfg.stationsDir)
+    gdf_pointPolygon = attributePoints_to_Polygon (admPath, station_csv, 'StationName', buffer_distance_meters=5000, StationDataDir=cfg.stationsDir)
     gdf_pointPolygon.rename(columns={f'ADM{adminLevel}_FR':f'ADM{adminLevel}'}, inplace=True)
     gdf_melt = gdf_pointPolygon.melt(
-        id_vars=gdf_pointPolygon.columns.difference(['StationName', 'StationName_0', 'StationName_1', 'StationName_2']),
-        value_vars=['StationName', 'StationName_0', 'StationName_1', 'StationName_2'],
+        id_vars=gdf_pointPolygon.columns.difference(['StationName_1', 'StationName_2', 'StationName_3', 'StationName_4']),
+        value_vars=['StationName_1', 'StationName_2', 'StationName_3', 'StationName_4'],
         var_name='StationName_Type',  # Temporary column indicating the source column
         value_name='StationName_Merged'  # Use a unique column name here
     )
