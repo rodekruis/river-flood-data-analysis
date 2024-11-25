@@ -1,5 +1,5 @@
 - [ ] Figure 1: initial data + study area map combo
-    - [ ] Raw glofas raster data 
+    - [ ] Raw glofas raster data for one day
     - [ ] administrative unit overlay (black lines?) + names 
     - [ ] Google Floodhub stations
     - [ ] DNH hydrological stations

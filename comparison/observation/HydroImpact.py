@@ -191,6 +191,7 @@ def loop_over_stations(station_csv, DataDir, RP, admPath, adminLevel):
     
     gdf_pointPolygon = attributePoints_to_Polygon (admPath, station_csv, 'StationName', buffer_distance_meters=5000, StationDataDir=cfg.stationsDir)
     gdf_pointPolygon.rename(columns={f'ADM{adminLevel}_FR':f'ADM{adminLevel}'}, inplace=True)
+    gdf_pointPolygon [f'ADM{adminLevel}'] = gdf_pointPolygon [f'ADM{adminLevel}'].apply(capitalize)
     gdf_melt = gdf_pointPolygon.melt(
         id_vars=gdf_pointPolygon.columns.difference(['StationName_1', 'StationName_2', 'StationName_3', 'StationName_4']),
         value_vars=['StationName_1', 'StationName_2', 'StationName_3', 'StationName_4'],
@@ -198,15 +199,14 @@ def loop_over_stations(station_csv, DataDir, RP, admPath, adminLevel):
         value_name='StationName_Merged'  # Use a unique column name here
     )
     gdf_melt = gdf_melt.dropna(subset=['StationName_Merged'])
-
+    gdf_melt = gdf_melt.drop(columns='geometry')#.to_csv (f"{DataDir}/observation/adm_flood_events_RP{RP}yr.csv")
     # Proceed with the merge
     hydro_events_df = pd.merge(gdf_melt, all_events_df, left_on='StationName_Merged', right_on='StationName', how='inner')
-    hydro_events_df [f'ADM{adminLevel}'] = hydro_events_df [f'ADM{adminLevel}'].apply(capitalize)
     hydro_events_df.to_csv (f"{DataDir}/observation/observational_flood_events_RP_{RP}yr.csv")
-    hydro_events_gdf = gpd.GeoDataFrame(hydro_events_df, geometry='geometry')   
-    hydro_events_gdf.to_file(f"{DataDir}/observation/observational_flood_events_RP_{RP}yr.gpkg")
-    hydro_events_gdf.to_file
-    return hydro_events_gdf
+    #hydro_events_gdf = gpd.GeoDataFrame(hydro_events_df, geometry='geometry')   
+    #hydro_events_gdf.to_file(f"{DataDir}/observation/observational_flood_events_RP_{RP}yr.gpkg")
+    #hydro_events_gdf.to_file
+    return hydro_events_df
 
 
 if __name__=="__main__": 
