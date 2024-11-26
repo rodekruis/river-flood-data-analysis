@@ -253,24 +253,22 @@ class PredictedToImpactPerformanceAnalyzer:
             lambda x: self.calc_performance_scores(x[f'{self.comparisonType}'], x['Event'])
             )
         scores_byCommune_gdf = self.gdf_shape.merge(scores_by_commune, on=f'ADM{cfg.adminLevel}')
-        scores_byCommune_gdf.to_file (f"{self.DataDir}/{comparisonType}/scores_byCommuneRP{self.RPyr:.1f}_yr_leadtime{self.leadtime:.0f}.gpkg")
-        scores_byCommune_gdf.drop(columns='geometry').to_csv (f"{self.DataDir}/{comparisonType}/scores_byCommuneRP{self.RPyr:.1f}_yr_leadtime{self.leadtime:.0f}.csv")
+        scores_byCommune_gdf.to_file (f"{self.DataDir}/GloFAS/{comparisonType}/scores_byCommuneRP{self.RPyr:.1f}_yr_leadtime{self.leadtime:.0f}.gpkg")
+        scores_byCommune_gdf.drop(columns='geometry').to_csv (f"{self.DataDir}/GloFAS/{comparisonType}/scores_byCommuneRP{self.RPyr:.1f}_yr_leadtime{self.leadtime:.0f}.csv")
         return scores_byCommune_gdf
 
 if __name__=='__main__':
-    impact_csv = f'{cfg.DataDir}'
+    impact_csv = f'{cfg.DataDir}/Impact_data/impact_events_per_admin_529.csv'
+    comparisonType ='Impact'
     for RPyr in cfg.RPsyr: 
-        comparisonType = 'Observation'
-        hydro_impact_gdf = f'{cfg.DataDir}/{comparisonType}/observational_flood_events_RP_{RPyr}yr.csv'
-        #hydro_impact_gdf = loop_over_stations (cfg.DNHstations , cfg.DataDir, RPyr, cfg.admPath, cfg.adminLevel)
         for leadtime in cfg.leadtimes: 
             floodProbability_path = cfg.DataDir/ f"floodedRP{RPyr}yr_leadtime{leadtime}_ADM{cfg.adminLevel}.gpkg"
             floodProbability_gdf = checkVectorFormat (floodProbability_path)
             # calculate the flood events
-            definer = FloodDefiner (cfg.adminLevel)
+            definer = FloodDefiner(cfg.adminLevel)
             PredictedEvents_gdf = definer.EventMaker (floodProbability_gdf, cfg.actionLifetime, cfg.triggerProb)
             # print (readcsv(f"{DataDir}/Données partagées - DNH Mali - 2019/Donne╠ües partage╠ües - DNH Mali - 2019/De╠übit du Niger a╠Ç Ansongo.csv"))
-            analyzer = PredictedToImpactPerformanceAnalyzer(cfg.DataDir, RPyr, leadtime, hydro_impact_gdf, cfg.triggerProb, cfg.adminLevel, cfg.admPath, cfg.startYear, cfg.endYear, cfg.years, PredictedEvents_gdf, comparisonType)
+            analyzer = PredictedToImpactPerformanceAnalyzer(cfg.DataDir, RPyr, leadtime, impact_csv, cfg.triggerProb, cfg.adminLevel, cfg.admPath, cfg.startYear, cfg.endYear, cfg.years, PredictedEvents_gdf, comparisonType)
             analyzer.matchImpact_and_Trigger()
             analyzer.calculateCommunePerformance()
     # for RPyr in cfg.RPsyr: 
