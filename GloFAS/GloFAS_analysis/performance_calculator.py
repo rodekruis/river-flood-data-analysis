@@ -1,6 +1,6 @@
 import pandas as pd
 import geopandas as gpd
-import os
+from pathlib import Path
 import numpy as np
 import unidecode
 import matplotlib.pyplot as plt
@@ -31,8 +31,8 @@ class PredictedToImpactPerformanceAnalyzer:
         self.impactData = impactData
         self.PredictedEvents_gdf = PredictedEvents_gdf
         self.comparisonType = comparisonType
-        self.comparisonDir = f'{self.DataDir}/{comparisonType}'
-        os.mkdir (self.comparisonDir, exist_ok=True)
+        self.comparisonDir = Path(f'{self.DataDir}/{comparisonType}')
+        self.comparisonDir.mkdir (parents=True, exist_ok=True)
         if comparisonType =='Observation': 
             self.impact_gdf = self.openObservation_gdf()
         elif comparisonType =='Impact': 
