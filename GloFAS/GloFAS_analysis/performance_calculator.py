@@ -1,11 +1,11 @@
 import pandas as pd
 import geopandas as gpd
+import os
 import numpy as np
 import unidecode
 import matplotlib.pyplot as plt
 from datetime import datetime, timedelta
 from GloFAS.GloFAS_analysis.flood_definer import FloodDefiner
-
 from GloFAS.GloFAS_prep.vectorCheck import checkVectorFormat
 import GloFAS.GloFAS_prep.configuration as cfg
 class PredictedToImpactPerformanceAnalyzer:
@@ -31,7 +31,8 @@ class PredictedToImpactPerformanceAnalyzer:
         self.impactData = impactData
         self.PredictedEvents_gdf = PredictedEvents_gdf
         self.comparisonType = comparisonType
-        
+        self.comparisonDir = f'{self.DataDir}/{comparisonType}'
+        os.mkdir (self.comparisonDir, exist_ok=True)
         if comparisonType =='Observation': 
             self.impact_gdf = self.openObservation_gdf()
         elif comparisonType =='Impact': 
@@ -144,25 +145,25 @@ class PredictedToImpactPerformanceAnalyzer:
          # Keep entries from the original GloFASCommune_gdf where there was not yet a match
         PredictedEvents_gdf = PredictedEvents_gdf[PredictedEvents_gdf['Remove'] != 1] # remove was a 1, so we must keep everything that is not 1
         
-        # NO YEAR IMPACT? --> no checking : this is the piece of code:
-        # for year in self.years:
-        #     # Convert year to date range for that year
-        #     start_of_year = pd.to_datetime(f'{year}-01-01')
-        #     end_of_year = pd.to_datetime(f'{year}-12-31')
+        #NO YEAR IMPACT? --> no checking : this is the piece of code:
+        for year in self.years:
+            # Convert year to date range for that year
+            start_of_year = pd.to_datetime(f'{year}-01-01')
+            end_of_year = pd.to_datetime(f'{year}-12-31')
 
-        #     # Find communes that recorded an impact in the given year
-        #     recorded_impacts = self.impact_gdf[
-        #         (self.impact_gdf['Start Date'] >= start_of_year) &
-        #         (self.impact_gdf['End Date'] <= end_of_year)
-        #         ][f'ADM{self.adminLevel}'].unique()
+            # Find communes that recorded an impact in the given year
+            recorded_impacts = self.impact_gdf[
+                (self.impact_gdf['Start Date'] >= start_of_year) &
+                (self.impact_gdf['End Date'] <= end_of_year)
+                ][f'ADM{self.adminLevel}'].unique()
 
-        #     # Remove rows in GloFAS where no impact was recorded for that commune in that year
-        #     PredictedEvents_gdf = PredictedEvents_gdf[
-        #         ~(
-        #             (PredictedEvents_gdf['StartValidTime'] >= start_of_year) &
-        #             (PredictedEvents_gdf['EndValidTime'] <= end_of_year) &
-        #             (~PredictedEvents_gdf[f'ADM{self.adminLevel}'].isin(recorded_impacts))
-        #         )]
+            # Remove rows in GloFAS where no impact was recorded for that commune in that year
+            PredictedEvents_gdf = PredictedEvents_gdf[
+                ~(
+                    (PredictedEvents_gdf['StartValidTime'] >= start_of_year) &
+                    (PredictedEvents_gdf['EndValidTime'] <= end_of_year) &
+                    (~PredictedEvents_gdf[f'ADM{self.adminLevel}'].isin(recorded_impacts))
+                )]
 
         # Prepare the remaining rows to be added to impact_gdf
         remaining_rows = PredictedEvents_gdf.copy()
@@ -207,7 +208,7 @@ class PredictedToImpactPerformanceAnalyzer:
         # now add remaining GloFAS rows 
         # add rows for trigger entries = 1 , but no recorded impact 
         
-        self.impact_gdf.to_file (f"{self.DataDir}/{comparisonType}/model_vs{comparisonType}RP{self.RPyr:.1f}_yr_leadtime{self.leadtime:.0f}.shp")
+        self.impact_gdf.to_file (f"{self.DataDir}/{comparisonType}/model_vs{comparisonType}RP{self.RPyr:.1f}_yr_leadtime{self.leadtime:.0f}.gpkg")
     
     def calc_performance_scores(self, obs, pred):
         '''Calculate performance scores based on observed and predicted values,
@@ -218,7 +219,7 @@ class PredictedToImpactPerformanceAnalyzer:
         hits = df[['cons_class', 'hits']].drop_duplicates().hits[df.hits == True].count()
         false_alarms = (pred.loc[pred.shift() != pred].sum()) - hits
         misses = sum((obs == 1) & (pred == 0))
-        correct_negatives = sum((obs == 0) & (pred == 0))
+        correct_negatives = sum((obs == 0) & (pred == 0)) # there is no use in calculating correct negatives as there are many
 
         # Calculate metrics
         output = {
@@ -226,8 +227,11 @@ class PredictedToImpactPerformanceAnalyzer:
             'far': false_alarms / (hits + false_alarms) if hits + false_alarms != 0 else np.nan,  # False Alarm Ratio
             'pofd': false_alarms / (false_alarms + correct_negatives) if false_alarms + correct_negatives != 0 else np.nan,  # Probability of False Detection
             'csi': hits / (hits + false_alarms + misses) if hits + false_alarms + misses != 0 else np.nan,  # Critical Success Index
-            'accuracy': (hits + correct_negatives) / (hits + correct_negatives + false_alarms + misses) if hits + correct_negatives + false_alarms + misses != 0 else np.nan,  # Accuracy
-            'precision': hits / (hits + false_alarms) if hits + false_alarms != 0 else np.nan  # Precision
+            # 'accuracy': (hits + correct_negatives) / (hits + correct_negatives + false_alarms + misses) if hits + correct_negatives + false_alarms + misses != 0 else np.nan,  # Accuracy
+            'precision': hits / (hits + false_alarms) if hits + false_alarms != 0 else np.nan,
+            'TP': hits,  
+            'TN': false_alarms,
+            'CN': correct_negatives
         }
 
         return pd.Series(output)
@@ -242,7 +246,8 @@ class PredictedToImpactPerformanceAnalyzer:
             lambda x: self.calc_performance_scores(x[f'{self.comparisonType}'], x['Event'])
         )
         scores_byCommune_gdf = self.gdf_shape.merge(scores_by_commune, on=f'ADM{cfg.adminLevel}')
-        scores_byCommune_gdf.to_file (f"{self.DataDir}/{comparisonType}/scores_byCommuneRP{self.RPyr:.1f}_yr_leadtime{self.leadtime:.0f}.shp")
+        scores_byCommune_gdf.to_file (f"{self.DataDir}/{comparisonType}/scores_byCommuneRP{self.RPyr:.1f}_yr_leadtime{self.leadtime:.0f}.gpkg")
+        scores_byCommune_gdf.drop(columns='geometry').to_csv (f"{self.DataDir}/{comparisonType}/scores_byCommuneRP{self.RPyr:.1f}_yr_leadtime{self.leadtime:.0f}.csv")
         return scores_byCommune_gdf
 
 if __name__=='__main__':
@@ -253,10 +258,10 @@ if __name__=='__main__':
         for leadtime in cfg.leadtimes: 
             floodProbability_path = cfg.DataDir/ f"floodedRP{RPyr}yr_leadtime{leadtime}_ADM{cfg.adminLevel}.gpkg"
             floodProbability_gdf = checkVectorFormat (floodProbability_path)
-            #calculate the flood events
+            # calculate the flood events
             definer = FloodDefiner (cfg.adminLevel)
             PredictedEvents_gdf = definer.EventMaker (floodProbability_gdf, cfg.actionLifetime, cfg.triggerProb)
-        #print (readcsv(f"{DataDir}/Données partagées - DNH Mali - 2019/Donne╠ües partage╠ües - DNH Mali - 2019/De╠übit du Niger a╠Ç Ansongo.csv"))
+            # print (readcsv(f"{DataDir}/Données partagées - DNH Mali - 2019/Donne╠ües partage╠ües - DNH Mali - 2019/De╠übit du Niger a╠Ç Ansongo.csv"))
             analyzer = PredictedToImpactPerformanceAnalyzer(cfg.DataDir, RPyr, leadtime, hydro_impact_gdf, cfg.triggerProb, cfg.adminLevel, cfg.admPath, cfg.startYear, cfg.endYear, cfg.years, PredictedEvents_gdf, comparisonType)
             analyzer.matchImpact_and_Trigger()
             analyzer.calculateCommunePerformance()
