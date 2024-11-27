@@ -10,13 +10,13 @@
 
 - [ ] Table 3: Configuration settings (see configuration.py)
 
-- [ ] Figure 2: GloFAS performance, 2 maps of Mali divided by administrative units, for settings: RP=5yr , leadtime=7 days: 
-    - [ ] FAR 
-    - [ ] POD
+- [ ] Figure 2: GloFAS performance, 4 maps of Mali divided by administrative units, for settings: RP=5yr , leadtime=7 days: 
+    - [ ] FAR for obs & imp
+    - [ ] POD for obs & imp
 
-- [ ] Figure 3: Google floodhub performance,  2 maps of Mali, divided by administrative units, for settings RP=5yr , leadtime=7 days 
-    - [ ] FAR 
-    - [ ] POD
+- [ ] Figure 3: Google floodhub performance,  4 maps of Mali, divided by administrative units, for settings RP=5yr , leadtime=7 days 
+    - [ ] FAR for obs & imp
+    - [ ] POD for obs & imp
 
 - [ ] Figure 4: for one administrative unit (pick one with high risk + many datapoints), containing 4 plots
  each plot with lines for values of each model [GloFAS, Google Floodhub, EAP] against each metric [observation,     impact] = 6 lines (3 colours, 2 linestyles)
@@ -34,3 +34,4 @@
         - y-axis: FAR (-) 
 
 - [ ] Figure 5: Timeseries met discharge van FloodHub (en GloFAS) met transparante boxes(/lijnen bij 1-daagse events) voor events, plus ook return periods als y. Geeft impressie van wat de modellen doen, wanneer ze triggeren, alsook hoe ze niet matchen met impact. NB: dit kan ook met observatiedata, denk ik.
+- [ ] Figure 5: performance of models GloFAS AND Floodhub / GloFAS OR Floodhub , depending which one performed best

@@ -7,9 +7,9 @@ As of now, late 2024, the scripts focus on floods in Mali, but later, the goal i
 ## Overview
 
 An analysis can be divided into three main parts: (1) preparing the GloFAS data; (2) preparing the FloodHub data; and (3) comparing them. The directories are set-up comparably:
-1. **Preparing GloFAS data**: *GloFAS* 
+1. **Preparing GloFAS data**: *GloFAS* directory contains scripts to extract GloFAS data through an API, and define flood events that are comparable with impacts defined through impact data or observational data (from hydrological stations)
 2. **Preparing FloodHub data**: *GoogleFloodHub* directory contains scripts to query the (beta) FloodHub API and transform the downloaded data into a uniform format suitable for comparison with GloFAS forecasts. A set-up and manual for the downloading part can be found [here](https://github.com/valentijn7/GoogleFloodHub-data-extractor.git). Furthermore, ...
-3. **Comparison**: ...
+3. **Comparison**: visualizing and comparing outcomes of GloFAS performance to Floodhub
 
 ## Data
 
