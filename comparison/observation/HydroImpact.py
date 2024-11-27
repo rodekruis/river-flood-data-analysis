@@ -188,7 +188,7 @@ def loop_over_stations(station_csv, DataDir, RP, admPath, adminLevel):
     #generate the gdf to merge with where the points are attributed to the respective administrative units
     
     all_events_df = pd.concat (all_events, ignore_index=True)
-    
+    all_events_df.to_csv (f"{DataDir}/observation/observationalStation_flood_events_RP_{RP}yr.csv")
     gdf_pointPolygon = attributePoints_to_Polygon (admPath, station_csv, 'StationName', buffer_distance_meters=5000, StationDataDir=cfg.stationsDir)
     gdf_pointPolygon.rename(columns={f'ADM{adminLevel}_FR':f'ADM{adminLevel}'}, inplace=True)
     gdf_pointPolygon [f'ADM{adminLevel}'] = gdf_pointPolygon [f'ADM{adminLevel}'].apply(capitalize)
@@ -197,7 +197,7 @@ def loop_over_stations(station_csv, DataDir, RP, admPath, adminLevel):
         value_vars=['StationName_1', 'StationName_2', 'StationName_3', 'StationName_4'],
         var_name='StationName_Type',  # Temporary column indicating the source column
         value_name='StationName_Merged'  # Use a unique column name here
-    )
+        )
     gdf_melt = gdf_melt.dropna(subset=['StationName_Merged'])
     gdf_melt = gdf_melt.drop(columns='geometry')#.to_csv (f"{DataDir}/observation/adm_flood_events_RP{RP}yr.csv")
     # Proceed with the merge
