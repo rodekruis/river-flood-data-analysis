@@ -33,3 +33,4 @@
         - x-axis: return period (yr) 
         - y-axis: FAR (-) 
 
+- [ ] Figure 5: Timeseries met discharge van FloodHub (en GloFAS) met transparante boxes(/lijnen bij 1-daagse events) voor events, plus ook return periods als y. Geeft impressie van wat de modellen doen, wanneer ze triggeren, alsook hoe ze niet matchen met impact. NB: dit kan ook met observatiedata, denk ik.
