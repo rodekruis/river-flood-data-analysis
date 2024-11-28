@@ -34,3 +34,11 @@ years = np.arange(startYear, endYear, 1)
 admPath = adminPaths [(adminLevel-1)] # generate the useful administrative unit path 
 nrCores = 4 #determine number of cpu cores to use (check your local device or the maximum allowed by your virtual computer)
 measure = 'max' # measure to aggregate on :) 
+# current EAP Propagation Trigger Model
+StationCombos = [
+    {"Upstream": "Banankoro", "Downstream": "Bamako", "PropagationTime": 4},
+    {"Upstream": "Bamako", "Downstream": "Koulikoro", "PropagationTime": 1},
+    {"Upstream": "Koulikoro", "Downstream": "Tamani", "PropagationTime": 3},
+    {"Upstream": "Tamani", "Downstream": "Kirango", "PropagationTime": 2},
+    {"Upstream": "Kirango", "Downstream": "Ké-Macina", "PropagationTime": 1},
+]

@@ -28,6 +28,7 @@ def ptm_events(DNHstations, DataDir, RP, StationCombos):
                     'StationName': [downstream_station],
                     'Start Date': [StartDate],
                     'End Date': [EndDate],
+                    'LeadTime': [propagationtime*24]
                 })
                 pred_ptm_events.append(temp_one_station_one_event_df)
     
@@ -35,7 +36,7 @@ def ptm_events(DNHstations, DataDir, RP, StationCombos):
     if pred_ptm_events:
         ptm_events_df = pd.concat(pred_ptm_events, ignore_index=True)
     else:
-        ptm_events_df = pd.DataFrame(columns=['StationName', 'Start Date', 'End Date'])
+        ptm_events_df = pd.DataFrame(columns=['StationName', 'Start Date', 'End Date', 'LeadTime'])
     
     return ptm_events_df
 
