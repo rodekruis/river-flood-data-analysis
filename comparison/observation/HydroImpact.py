@@ -206,7 +206,7 @@ def events_per_adm (DataDir, admPath, adminLevel, station_csv, StationDataDir, a
     # Proceed with the merge
     hydro_events_df = pd.merge(gdf_melt, all_events_df, left_on='StationName_Merged', right_on='StationName', how='inner')
     hydro_events_df.to_csv (f"{DataDir}/{model}/floodevents_admUnit_RP{RP}yr.csv")
-    hydro_events_gdf = gpd.GeoDataFrame(hydro_events_df, geometry='geometry')   
+    #hydro_events_gdf = gpd.GeoDataFrame(hydro_events_df, geometry='geometry')   
     #hydro_events_gdf.to_file(f"{DataDir}/observation/observational_flood_events_RP_{RP}yr.gpkg")
     #hydro_events_gdf.to_file
     return hydro_events_df
