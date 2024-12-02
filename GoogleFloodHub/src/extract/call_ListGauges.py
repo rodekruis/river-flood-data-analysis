@@ -20,16 +20,28 @@ def generate_url_ListGauges(path_to_key : str) -> str:
     return f'{base_url}?key={get_API_key(path_to_key)}'
 
 
-def make_request_ListGauges(country_code : str, path_to_key : str) -> requests.Response:
+def make_request_ListGauges(
+        country_code: str, path_to_key: str, quality_verified: bool = True
+    ) -> requests.Response:
     """
     Make the API request for the list of gauges for a specific country
 
     :param url: the URL
+    :param path_to_key: location of the key
+    :param quality_verified: whether to download (un)verified gauges
     :return: the list of gauges
     """
+    if type(quality_verified) is not bool:
+        raise ValueError('quality_verified must be a boolean')
+    else:
+        qv = not quality_verified # negationary flip
+    
     response = requests.post(
         generate_url_ListGauges(path_to_key),
-        json = {'regionCode': country_code}
+        json = {
+            'regionCode': country_code,
+            'includeNonQualityVerified': qv
+        }
     )
     
     return response
@@ -78,7 +90,7 @@ def convert_ListGauges_to_df(gauges : List[Dict[str, Any]]) -> pd.DataFrame:
     return df
 
 
-def get_ListGauges(country : str, path_to_key : str) -> pd.DataFrame:
+def get_ListGauges(country : str, path_to_key : str, quality_verified: bool = False) -> pd.DataFrame:
     """
     Get the list of gauges for a specific country by calling helper functions which:
     - generate the URL;
@@ -88,12 +100,17 @@ def get_ListGauges(country : str, path_to_key : str) -> pd.DataFrame:
 
     :param country: the country
     :param path_to_key: path to the .txt file containing the API key
+    :param quality_verified: whether to download (un)verified gauges. The default is False,
+                             but it gets negated later on. This is confusing, but the other
+                             function calls work the other way around...
     :return: DataFrame with the gauges
     """
     return convert_ListGauges_to_df(
         verify_ListGauges(
             make_request_ListGauges(
-                get_json_file("../data/country_code_conversions/country_codes.json")[country], path_to_key
+                get_json_file("../data/country_code_conversions/country_codes.json")[country],
+                path_to_key,
+                quality_verified
             )
         )
     )
