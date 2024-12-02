@@ -164,7 +164,7 @@ def createEvent(trigger_df):
         events_df = pd.DataFrame(columns=['Observation', 'Start Date', 'End Date'])
         return events_df
 
-def loop_over_stations(station_csv, DataDir, RP, admPath, adminLevel): 
+def loop_over_stations(station_csv, DataDir, RP): 
     RP = float(RP)
     station_df = pd.read_csv (station_csv, header=0)
     #print (station_df.columns)
@@ -186,10 +186,13 @@ def loop_over_stations(station_csv, DataDir, RP, admPath, adminLevel):
         all_events.append (event_df)
     
     #generate the gdf to merge with where the points are attributed to the respective administrative units
-    
     all_events_df = pd.concat (all_events, ignore_index=True)
-    all_events_df.to_csv (f"{DataDir}/observation/observationalStation_flood_events_RP_{RP}yr.csv")
-    gdf_pointPolygon = attributePoints_to_Polygon (admPath, station_csv, 'StationName', buffer_distance_meters=5000, StationDataDir=cfg.stationsDir)
+    all_events_df.to_csv (f"{DataDir}/Observation/observationalStation_flood_events_RP_{RP}yr.csv")
+    return all_events_df 
+
+def events_per_adm (DataDir, admPath, adminLevel, station_csv, StationDataDir, all_events_df, model, RP):
+    '''model may also be: observation / impact , its just to describe what type of representation they are for reality to store the data eventually'''
+    gdf_pointPolygon = attributePoints_to_Polygon (admPath, station_csv, 'StationName', buffer_distance_meters=5000, StationDataDir=StationDataDir)
     gdf_pointPolygon.rename(columns={f'ADM{adminLevel}_FR':f'ADM{adminLevel}'}, inplace=True)
     gdf_pointPolygon [f'ADM{adminLevel}'] = gdf_pointPolygon [f'ADM{adminLevel}'].apply(capitalize)
     gdf_melt = gdf_pointPolygon.melt(
@@ -202,7 +205,7 @@ def loop_over_stations(station_csv, DataDir, RP, admPath, adminLevel):
     gdf_melt = gdf_melt.drop(columns='geometry')#.to_csv (f"{DataDir}/observation/adm_flood_events_RP{RP}yr.csv")
     # Proceed with the merge
     hydro_events_df = pd.merge(gdf_melt, all_events_df, left_on='StationName_Merged', right_on='StationName', how='inner')
-    hydro_events_df.to_csv (f"{DataDir}/observation/observational_flood_events_RP_{RP}yr.csv")
+    hydro_events_df.to_csv (f"{DataDir}/{model}/floodevents_admUnit_RP{RP}yr.csv")
     #hydro_events_gdf = gpd.GeoDataFrame(hydro_events_df, geometry='geometry')   
     #hydro_events_gdf.to_file(f"{DataDir}/observation/observational_flood_events_RP_{RP}yr.gpkg")
     #hydro_events_gdf.to_file
@@ -212,4 +215,5 @@ def loop_over_stations(station_csv, DataDir, RP, admPath, adminLevel):
 if __name__=="__main__": 
     for RP in cfg.RPsyr: 
         #print (readcsv(f"{DataDir}/Données partagées - DNH Mali - 2019/Donne╠ües partage╠ües - DNH Mali - 2019/De╠übit du Niger a╠Ç Ansongo.csv"))
-        event_gdf = loop_over_stations (cfg.DNHstations, cfg.DataDir, RP, cfg.admPath, cfg.adminLevel)
+        event_df = loop_over_stations (cfg.DNHstations, cfg.DataDir, RP)
+        event_gdf = events_per_adm (cfg.DataDir, cfg.admPath, cfg.adminLevel, cfg.DNHstations, cfg.stationsDir, all_events_df, 'Observation', RP)

@@ -28,9 +28,17 @@ leadtimes = [72, 96, 120,144, 168] # hours
 startYear = 2004 
 endYear = 2023 # 00:00 1st of january of that year, so up to but not including
 triggerProb = 0.6
-actionLifetime = 10 #days
+actionLifetime = 4 #days
 adminLevel = 2 # choose level on which you would like to aggregate : 1,2,3
 years = np.arange(startYear, endYear, 1)
 admPath = adminPaths [(adminLevel-1)] # generate the useful administrative unit path 
 nrCores = 4 #determine number of cpu cores to use (check your local device or the maximum allowed by your virtual computer)
 measure = 'max' # measure to aggregate on :) 
+# current EAP Propagation Trigger Model
+StationCombos = [
+    {"Upstream": "Banankoro", "Downstream": "Bamako", "PropagationTime": 4},
+    {"Upstream": "Bamako", "Downstream": "Koulikoro", "PropagationTime": 1},
+    {"Upstream": "Koulikoro", "Downstream": "Tamani", "PropagationTime": 3},
+    {"Upstream": "Tamani", "Downstream": "Kirango", "PropagationTime": 2},
+    {"Upstream": "Kirango", "Downstream": "Ké-Macina", "PropagationTime": 1},
+]
