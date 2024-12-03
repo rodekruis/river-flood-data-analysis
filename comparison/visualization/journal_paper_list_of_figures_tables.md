@@ -1,7 +1,7 @@
 - [ ] Figure 1: initial data + study area map combo
     - [ ] Raw glofas raster data for one day
     - [ ] administrative unit overlay (black lines?) + names 
-    - [ ] Google Floodhub stations
+    - [ ] Google Floodhub virtual stations
     - [ ] DNH hydrological stations
 
 - [ ] Table 1: Contingency table 

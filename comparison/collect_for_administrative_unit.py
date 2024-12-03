@@ -8,7 +8,7 @@ def collect_performance_measures(admin_unit, DataDir, leadtimes, return_periods)
 
     Parameters:
     - admin_unit (str): Name of the administrative unit (ADM2 field in the CSVs).
-    - DataDir (str): Base directory containing subdirectories for models (GloFAS, Google Floodhub, EAP).
+    - DataDir (str): Base directory containing subdirectories for models (GloFAS, Google Floodhub, PTM).
     - leadtimes (list): List of leadtimes to include (defines columns of the 2D array).
     - return_periods (list): List of return periods to include (defines rows of the 2D array).
 
@@ -18,25 +18,25 @@ def collect_performance_measures(admin_unit, DataDir, leadtimes, return_periods)
           'leadtimes': [...],
           'return_periods': [...],
           'POD': {
-              'GloFAS': {'observation': np.array([...]), 'impact': np.array([...])},
-              'Google Floodhub': {'observation': np.array([...]), 'impact': np.array([...])},
-              'EAP': {'observation': np.array([...]), 'impact': np.array([...])}
+              'GloFAS': {'Observation': np.array([...]), 'impact': np.array([...])},
+              'Google Floodhub': {'Observation': np.array([...]), 'impact': np.array([...])},
+              'PTM': {'Observation': np.array([...]), 'Impact': np.array([...])}
           },
           'FAR': {
-              'GloFAS': {'observation': np.array([...]), 'impact': np.array([...])},
-              'Google Floodhub': {'observation': np.array([...]), 'impact': np.array([...])},
-              'EAP': {'observation': np.array([...]), 'impact': np.array([...])}
+              'GloFAS': {'Observation': np.array([...]), 'Impact': np.array([...])},
+              'Google Floodhub': {'Observation': np.array([...]), 'Impact': np.array([...])},
+              'PTM': {'Observation': np.array([...]), 'Impact': np.array([...])}
           }
       }
     """
-    models = ['GloFAS', 'GoogleFloodHub', 'EAP']
+    models = ['GloFAS', 'GoogleFloodHub', 'PTM']
     data = {
         'leadtimes': leadtimes,
         'return_periods': return_periods,
-        'POD': {model: {'observation': np.full((len(return_periods), len(leadtimes)), np.nan),
-                        'impact': np.full((len(return_periods), len(leadtimes)), np.nan)} for model in models},
-        'FAR': {model: {'observation': np.full((len(return_periods), len(leadtimes)), np.nan),
-                        'impact': np.full((len(return_periods), len(leadtimes)), np.nan)} for model in models}
+        'POD': {model: {'Observation': np.full((len(return_periods), len(leadtimes)), np.nan),
+                        'Impact': np.full((len(return_periods), len(leadtimes)), np.nan)} for model in models},
+        'FAR': {model: {'Observation': np.full((len(return_periods), len(leadtimes)), np.nan),
+                        'Impact': np.full((len(return_periods), len(leadtimes)), np.nan)} for model in models}
     }
     
     for model in models:
@@ -45,7 +45,7 @@ def collect_performance_measures(admin_unit, DataDir, leadtimes, return_periods)
             print(f"Directory not found for model: {model}, skipping.")
             continue
         
-        for comparison_type in ['observation', 'impact']:
+        for comparison_type in ['Observation', 'Impact']:
             comp_dir = os.path.join(model_dir, comparison_type)
             if not os.path.exists(comp_dir):
                 print(f"Directory not found for comparison type: {comparison_type} in {model}, skipping.")
@@ -87,7 +87,7 @@ if __name__ =='__main__':
     # These regions include Bamako, Koulikoro, Ségou, Mopti, Timbouctou and Gao, which have historically experienced frequent and severe flood events. 
     # Regions such as Mopti and Ségou are of particular concern due to their high exposure to flooding as well as their dense populations,
     # Bla is in Segou, impact data recorded there, no obs
-    # Segou is in Segou, observation data recorded  ,  only false negatives, but there is impact
+    # Segou is in Segou, Observation data recorded  ,  only false negatives, but there is impact
     # Kolondieba in Sikasso, okay score in obs, no impact 
     # San in segou: impact data
 

@@ -24,7 +24,7 @@ settlements_tif = DataDir / "GlobalHumanSettlement/GHS_BUILT_S_E2030_GLOBE_R2023
 
 crs = f'EPSG:4326' 
 RPsyr = [1.5, 2.0, 5.0, 10.0] # return period threshold in years 
-leadtimes = [72, 96, 120,144, 168] # hours
+leadtimes = [24, 72, 96, 120,144, 168] # hours
 startYear = 2004 
 endYear = 2023 # 00:00 1st of january of that year, so up to but not including
 triggerProb = 0.6
