@@ -328,18 +328,18 @@ class PredictedToImpactPerformanceAnalyzer:
             lambda x: self.calc_performance_scores(x[f'{self.comparisonType}'], x['Event'])
         )
         scores_byCommune_gdf = self.gdf_shape.merge(scores_by_commune, on=f'ADM{cfg.adminLevel}')
-        scores_byCommune_gdf.to_file(f"{self.DataDir}/{self.model}/{self.comparisonType}/scores_byADM{self.adminLevel}_RP{self.RPyr:.1f}yr_leadtime{self.leadtime}.gpkg")
-        scores_byCommune_gdf.drop(columns='geometry').to_csv(f"{self.DataDir}/{self.model}/{self.comparisonType}/scores_byADM{self.adminLevel}_RP{self.RPyr:.1f}yr_leadtime{self.leadtime}.csv")
+        scores_byCommune_gdf.to_file(f"{self.DataDir}/{self.model}/{self.comparisonType}/scores_byCommuneRP{self.RPyr:.1f}_yr_leadtime{self.leadtime}.gpkg")
+        scores_byCommune_gdf.drop(columns='geometry').to_csv(f"{self.DataDir}/{self.model}/{self.comparisonType}/scores_byCommuneRP{self.RPyr:.1f}_yr_leadtime{self.leadtime}.csv")
         return scores_byCommune_gdf
 
 if __name__=='__main__':
     # impact_csv = f'{cfg.DataDir}/Impact_data/impact_events_per_admin_529.csv'
     # comparisonType ='Impact'
     # for RPyr in cfg.RPsyr: 
+    #     # PTM_events = f'{cfg.DataDir}/PTM/floodevents_admUnit_RP{RPyr}yr.csv'
+    #     ptm_events_df = ptm_events (cfg.DNHstations, cfg.DataDir, RPyr, cfg.StationCombos)
+    #     PTM_events_per_adm = events_per_adm(cfg.DataDir, cfg.admPath, cfg.adminLevel, cfg.DNHstations, cfg.stationsDir, ptm_events_df, 'PTM', RPyr)
     #     for leadtime in cfg.leadtimes:
-    #         # PTM_events = f'{cfg.DataDir}/PTM/floodevents_admUnit_RP{RPyr}yr.csv'
-    #         ptm_events_df = ptm_events (cfg.DNHstations, cfg.DataDir, RPyr, cfg.StationCombos)
-    #         PTM_events_per_adm = events_per_adm(cfg.DataDir, cfg.admPath, cfg.adminLevel, cfg.DNHstations, cfg.stationsDir, ptm_events_df, 'PTM', RPyr)
     #         # print (readcsv(f"{DataDir}/Données partagées - DNH Mali - 2019/Donne╠ües partage╠ües - DNH Mali - 2019/De╠übit du Niger a╠Ç Ansongo.csv"))
     #         analyzer = PredictedToImpactPerformanceAnalyzer(cfg.DataDir, RPyr, impact_csv, cfg.triggerProb, cfg.adminLevel, cfg.admPath, cfg.startYear, cfg.endYear, cfg.years, PTM_events_per_adm, comparisonType, cfg.actionLifetime, 'PTM', leadtime)
     #         analyzer.matchImpact_and_Trigger()
