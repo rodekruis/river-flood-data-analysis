@@ -161,3 +161,7 @@ if __name__ =='__main__':
     for admin_unit in admin_units:
         data = collect_performance_measures(admin_unit, cfg.DataDir, cfg.leadtimes, cfg.RPsyr)
         vis.performance_over_param(admin_unit, data, standard_RP=2.0, standard_leadtime=96)
+
+# to do : 
+## add lines between points 
+## general layouts 
