@@ -187,7 +187,7 @@ def loop_over_stations(station_csv, DataDir, RP):
     
     #generate the gdf to merge with where the points are attributed to the respective administrative units
     all_events_df = pd.concat (all_events, ignore_index=True)
-    all_events_df.to_csv (f"{DataDir}/Observation/observationalStation_flood_events_RP_{RP}yr.csv")
+    all_events_df.to_csv (f"{DataDir}/Observation_data/observationalStation_flood_events_RP_{RP}yr.csv")
     return all_events_df 
 
 def events_per_adm (DataDir, admPath, adminLevel, station_csv, StationDataDir, all_events_df, model, RP):
