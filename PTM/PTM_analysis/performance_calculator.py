@@ -6,7 +6,7 @@ import unidecode
 import matplotlib.pyplot as plt
 from datetime import datetime, timedelta
 from PTM.PTM_prep.ptm_events import ptm_events
-from comparison.observation.HydroImpact import events_per_adm
+from comparison.observation.HydroImpact import events_per_adm, loop_over_stations
 from GloFAS.GloFAS_analysis.flood_definer import FloodDefiner
 from GloFAS.GloFAS_prep.vectorCheck import checkVectorFormat
 import GloFAS.GloFAS_prep.configuration as cfg
@@ -57,10 +57,13 @@ class PredictedToImpactPerformanceAnalyzer:
         
     def openObservation_gdf(self):
         # Load the data
-        if self.impactData.endswith('.csv'):
-            df = pd.read_csv(self.impactData)
-        else: 
-            df = gpd.read_file(self.impactData)
+        if isinstance (self.impactData, str): 
+            if self.impactData.endswith('.csv'):
+                df = pd.read_csv(self.impactData)
+            else: 
+                df = gpd.read_file(self.impactData)
+        else: # assuming other option is dataframe 
+            df = self.impactData
 
         df[f'{comparisonType}']=1
         # Remove time and convert 'Start Date' and 'End Date' to datetime
@@ -344,31 +347,16 @@ if __name__=='__main__':
     
     comparisonType ='Observation'
     for RPyr in cfg.RPsyr: 
-        observation_csv = f'{cfg.DataDir}/{comparisonType}_data/observationalStation_flood_events_RP_{RPyr:.1f}yr.csv'
+        observation_stations = loop_over_stations(cfg.DNHstations, cfg.DataDir, RPyr)
+        observation_per_adm = events_per_adm(cfg.DataDir, cfg.admPath, cfg.adminLevel, cfg.DNHstations, cfg.stationsDir, observation_stations, 'Observation', RPyr) # f'{cfg.DataDir}/{comparisonType}/observationalStation_flood_events_RP_{RPyr:.1f}yr.csv'
+                    # PTM_events = f'{cfg.DataDir}/PTM/floodevents_admUnit_RP{RPyr}yr.csv'
+        ptm_events_df = ptm_events (cfg.DNHstations, cfg.DataDir, RPyr, cfg.StationCombos)
+        PTM_events_per_adm = events_per_adm (cfg.DataDir, cfg.admPath, cfg.adminLevel, cfg.DNHstations, cfg.stationsDir, ptm_events_df, 'PTM', RPyr)
         for leadtime in cfg.leadtimes:
-            # PTM_events = f'{cfg.DataDir}/PTM/floodevents_admUnit_RP{RPyr}yr.csv'
-            ptm_events_df = ptm_events (cfg.DNHstations, cfg.DataDir, RPyr, cfg.StationCombos)
-            PTM_events_per_adm = events_per_adm(cfg.DataDir, cfg.admPath, cfg.adminLevel, cfg.DNHstations, cfg.stationsDir, ptm_events_df, 'PTM', RPyr)
             # print (readcsv(f"{DataDir}/Données partagées - DNH Mali - 2019/Donne╠ües partage╠ües - DNH Mali - 2019/De╠übit du Niger a╠Ç Ansongo.csv"))
-            analyzer = PredictedToImpactPerformanceAnalyzer(cfg.DataDir, RPyr, observation_csv, cfg.triggerProb, cfg.adminLevel, cfg.admPath, cfg.startYear, cfg.endYear, cfg.years, PTM_events_per_adm, comparisonType, cfg.actionLifetime, 'PTM', leadtime)
+            analyzer = PredictedToImpactPerformanceAnalyzer(cfg.DataDir, RPyr, observation_per_adm, cfg.triggerProb, cfg.adminLevel, cfg.admPath, cfg.startYear, cfg.endYear, cfg.years, PTM_events_per_adm, comparisonType, cfg.actionLifetime, 'PTM', leadtime)
             analyzer.matchImpact_and_Trigger()
             analyzer.calculateCommunePerformance()
 
-
-    # for RPyr in cfg.RPsyr: 
-    #     comparisonType = 'Observation'
-    #     either: #hydro_impact_gdf = f'{cfg.DataDir}/{comparisonType}/...... observational_flood_events_RP_{RPyr}yr.csv'
-    #     or: #hydro_impact_df = loop_over_stations (cfg.DNHstations , cfg.DataDir, RPyr)
-          # obs_event_gdf = events_per_adm (cfg.admPath, cfg.adminLevel, cfg.DNHstations, cfg.stationsDir, hydro_impact_df, 'Observation')
-    #     for leadtime in cfg.leadtimes: 
-    #         floodProbability_path = cfg.DataDir/ f"floodedRP{RPyr}yr_leadtime{leadtime}_ADM{cfg.adminLevel}.gpkg"
-    #         floodProbability_gdf = checkVectorFormat (floodProbability_path)
-    #         # calculate the flood events
-    #         definer = FloodDefiner (cfg.adminLevel)
-    #         PredictedEvents_gdf = definer.EventMaker (floodProbability_gdf, cfg.actionLifetime, cfg.triggerProb)
-    #         # print (readcsv(f"{DataDir}/Données partagées - DNH Mali - 2019/Donne╠ües partage╠ües - DNH Mali - 2019/De╠übit du Niger a╠Ç Ansongo.csv"))
-    #         analyzer = PredictedToImpactPerformanceAnalyzer(cfg.DataDir, RPyr, leadtime, obs_events_gdf, cfg.triggerProb, cfg.adminLevel, cfg.admPath, cfg.startYear, cfg.endYear, cfg.years, PredictedEvents_gdf, comparisonType)
-    #         analyzer.matchImpact_and_Trigger()
-    #         analyzer.calculateCommunePerformance()
 
             
