@@ -81,7 +81,6 @@ class PredictedToImpactPerformanceAnalyzer:
         # Check the first few rows
         # Filter rows between 2004 and 2022 ()
         df_filtered = df[(df['End Date'].dt.year >= self.startYear) & (df['End Date'].dt.year < self.endYear)]
-        print (df_filtered.head)
         # Remove non-string entries from ADM columns
         df_filtered = df_filtered[df_filtered[f'ADM{self.adminLevel}'].apply(lambda x: isinstance(x, str))]
     
@@ -300,17 +299,31 @@ class PredictedToImpactPerformanceAnalyzer:
                 false_alarms += 1 # there is no use in calculating correct negatives as there are many
         print (f'hits: {hits}, misses: {misses}, false alarms: {false_alarms}, total {comparisonType} = {sum(obs==1)}, should be equal to {misses}+{hits}={misses+hits}')
         # Calculate metrics
-        output = {
-            'pod': hits / (hits + misses) if hits + misses != 0 else np.nan,  # Probability of Detection
-            'far': false_alarms / (hits + false_alarms) if hits + false_alarms != 0 else np.nan,  # False Alarm Ratio
-            #'pofd': false_alarms / (false_alarms + correct_negatives) if false_alarms + correct_negatives != 0 else np.nan,  # Probability of False Detection
-            'csi': hits / (hits + false_alarms + misses) if hits + false_alarms + misses != 0 else np.nan,  # Critical Success Index
-            # 'accuracy': (hits + correct_negatives) / (hits + correct_negatives + false_alarms + misses) if hits + correct_negatives + false_alarms + misses != 0 else np.nan,  # Accuracy
-            'precision': hits / (hits + false_alarms) if hits + false_alarms != 0 else np.nan,
-            'TP': hits,  
-            'FN': misses,
-            'FP': false_alarms
-        }
+        sum_predictions = false_alarms + hits
+        if sum_predictions == 0: 
+            output = {
+                'pod':  np.nan,  # Probability of Detection
+                'far': np.nan,  # False Alarm Ratio
+                #'pofd': false_alarms / (false_alarms + correct_negatives) if false_alarms + correct_negatives != 0 else np.nan,  # Probability of False Detection
+                'csi': np.nan,  # Critical Success Index
+                # 'accuracy': (hits + correct_negatives) / (hits + correct_negatives + false_alarms + misses) if hits + correct_negatives + false_alarms + misses != 0 else np.nan,  # Accuracy
+                'precision': np.nan,
+                'TP': hits,  
+                'FN': misses,
+                'FP': false_alarms
+            }
+        else: 
+            output = {
+                'pod': hits / (hits + misses) if hits + misses != 0 else np.nan,  # Probability of Detection
+                'far': false_alarms / (hits + false_alarms) if hits + false_alarms != 0 else np.nan,  # False Alarm Ratio
+                #'pofd': false_alarms / (false_alarms + correct_negatives) if false_alarms + correct_negatives != 0 else np.nan,  # Probability of False Detection
+                'csi': hits / (hits + false_alarms + misses) if hits + false_alarms + misses != 0 else np.nan,  # Critical Success Index
+                # 'accuracy': (hits + correct_negatives) / (hits + correct_negatives + false_alarms + misses) if hits + correct_negatives + false_alarms + misses != 0 else np.nan,  # Accuracy
+                'precision': hits / (hits + false_alarms) if hits + false_alarms != 0 else np.nan,
+                'TP': hits,  
+                'FN': misses,
+                'FP': false_alarms
+            }
 
         return pd.Series(output)
 
@@ -333,17 +346,17 @@ class PredictedToImpactPerformanceAnalyzer:
         return scores_byCommune_gdf
 
 if __name__=='__main__':
-    # impact_csv = f'{cfg.DataDir}/Impact_data/impact_events_per_admin_529.csv'
-    # comparisonType ='Impact'
-    # for RPyr in cfg.RPsyr: 
-    #     # PTM_events = f'{cfg.DataDir}/PTM/floodevents_admUnit_RP{RPyr}yr.csv'
-    #     ptm_events_df = ptm_events (cfg.DNHstations, cfg.DataDir, RPyr, cfg.StationCombos)
-    #     PTM_events_per_adm = events_per_adm(cfg.DataDir, cfg.admPath, cfg.adminLevel, cfg.DNHstations, cfg.stationsDir, ptm_events_df, 'PTM', RPyr)
-    #     for leadtime in cfg.leadtimes:
-    #         # print (readcsv(f"{DataDir}/Données partagées - DNH Mali - 2019/Donne╠ües partage╠ües - DNH Mali - 2019/De╠übit du Niger a╠Ç Ansongo.csv"))
-    #         analyzer = PredictedToImpactPerformanceAnalyzer(cfg.DataDir, RPyr, impact_csv, cfg.triggerProb, cfg.adminLevel, cfg.admPath, cfg.startYear, cfg.endYear, cfg.years, PTM_events_per_adm, comparisonType, cfg.actionLifetime, 'PTM', leadtime)
-    #         analyzer.matchImpact_and_Trigger()
-    #         analyzer.calculateCommunePerformance()
+    impact_csv = f'{cfg.DataDir}/Impact_data/impact_events_per_admin_529.csv'
+    comparisonType ='Impact'
+    for RPyr in cfg.RPsyr: 
+        # PTM_events = f'{cfg.DataDir}/PTM/floodevents_admUnit_RP{RPyr}yr.csv'
+        ptm_events_df = ptm_events (cfg.DNHstations, cfg.DataDir, RPyr, cfg.StationCombos)
+        PTM_events_per_adm = events_per_adm(cfg.DataDir, cfg.admPath, cfg.adminLevel, cfg.DNHstations, cfg.stationsDir, ptm_events_df, 'PTM', RPyr)
+        for leadtime in cfg.leadtimes:
+            # print (readcsv(f"{DataDir}/Données partagées - DNH Mali - 2019/Donne╠ües partage╠ües - DNH Mali - 2019/De╠übit du Niger a╠Ç Ansongo.csv"))
+            analyzer = PredictedToImpactPerformanceAnalyzer(cfg.DataDir, RPyr, impact_csv, cfg.triggerProb, cfg.adminLevel, cfg.admPath, cfg.startYear, cfg.endYear, cfg.years, PTM_events_per_adm, comparisonType, cfg.actionLifetime, 'PTM', leadtime)
+            analyzer.matchImpact_and_Trigger()
+            analyzer.calculateCommunePerformance()
     
     comparisonType ='Observation'
     for RPyr in cfg.RPsyr: 

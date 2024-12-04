@@ -58,13 +58,13 @@ def z_RP_station(HydroStations_RP_file, StationName, RP):
 
 def QRP_fit (hydro_df, RP): 
 
-    # 1. Extract the annual maximum discharge values
+    # Extract the annual maximum discharge values
     hydro_df['Year'] = hydro_df['Date'].dt.year
     annual_max_discharge = hydro_df.groupby('Year')['Value'].max()
 
-    # 2. Fit a Gumbel distribution to the annual maximum discharge values
+    # Fit a Gumbel distribution to the annual maximum discharge values
     loc, scale = stats.gumbel_r.fit(annual_max_discharge)
-    # 4. Calculate the discharge value corresponding to the return period
+    # Calculate the discharge value corresponding to the return period
     discharge_value = stats.gumbel_r.ppf(1 - 1/RP, loc, scale)
     return discharge_value
 
