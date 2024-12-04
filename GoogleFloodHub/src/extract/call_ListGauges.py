@@ -108,7 +108,7 @@ def get_ListGauges(country : str, path_to_key : str, quality_verified: bool = Fa
     return convert_ListGauges_to_df(
         verify_ListGauges(
             make_request_ListGauges(
-                get_json_file("../data/country_code_conversions/country_codes.json")[country],
+                get_json_file("../data/mappings/country_codes.json")[country],
                 path_to_key,
                 quality_verified
             )
