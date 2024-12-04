@@ -5,6 +5,8 @@ from GloFAS.GloFAS_prep.text_formatter import remove_accents, capitalize
 import scipy.stats as stats
 from comparison.pointMatching import attributePoints_to_Polygon
 import geopandas as gpd
+from scipy.stats import genextreme
+
 def parse_date_with_fallback(date_str, year):
     try:
         # Try to parse the date with the given year
@@ -68,6 +70,33 @@ def QRP_fit (hydro_df, RP):
     discharge_value = stats.gumbel_r.ppf(1 - 1/RP, loc, scale)
     return discharge_value
 
+def Q_GEV_fit_daily(hydro_df, percentile): 
+    """
+    Fits a GEV distribution to the daily discharge values and calculates the discharge 
+    corresponding to a given percentile.
+
+    Parameters:
+        hydro_df (pd.DataFrame): A dataframe with at least 'Date' and 'Value' columns.
+            'Date' should be a datetime object and 'Value' is the discharge value.
+        percentile (float): Percentile for which to compute the discharge value (between 0 and 100).
+
+    Returns:
+        float: The discharge value corresponding to the given percentile.
+    """
+    # Ensure 'Date' column is a datetime object
+    hydro_df['Date'] = pd.to_datetime(hydro_df['Date'])
+
+    # Extract daily discharge values
+    daily_discharge = hydro_df['Value']
+
+    # Fit a GEV distribution to the daily discharge values
+    shape, loc, scale = genextreme.fit(daily_discharge)
+
+    # Calculate the discharge value corresponding to the specified percentile
+    discharge_value = genextreme.ppf(percentile / 100, shape, loc=loc, scale=scale)
+
+    return discharge_value
+
 
 def stampHydroTrigger(hydro_df, RP, StationName): 
     """
@@ -89,8 +118,11 @@ def stampHydroTrigger(hydro_df, RP, StationName):
     #QRP = QRP_station(HydroStations_RP_file, StationName, RP)
     Q_station = hydro_df["Value"] 
     
-
-    QRP= QRP_fit (hydro_df, RP)
+    if RP < 21:
+        QRP= QRP_fit (hydro_df, RP)
+    else: # assuming above 20 is percentile, RP is percentile instead 
+        print ('applying a GEV, assuming your RP is in percentiles')
+        QRP = Q_GEV_fit (hydro_df, RP) 
     #print (f"for {StationName} : return period Q= {QRP}")
     if not isinstance(QRP, (int, float)):
         raise ValueError(f"Expected QRP to be a scalar (int or float), but got {type(QRP)}.")
@@ -100,7 +132,6 @@ def stampHydroTrigger(hydro_df, RP, StationName):
     # Copy the DataFrame and add the 'trigger' column
     hydro_trigger_df = hydro_df.copy()
     hydro_trigger_df['Trigger'] = (hydro_trigger_df['Value'] > QRP).astype(int)
-
     return hydro_trigger_df
 
 def createEvent(trigger_df):
@@ -109,7 +140,6 @@ def createEvent(trigger_df):
     trigger_df = trigger_df.sort_values(by=[f'Date']).reset_index(drop=True)
 
     # Prepare commune info with geometry for event creation
-
     event_data = []
             
     # Keep track of which rows have been processed to avoid rechecking
@@ -213,7 +243,7 @@ def events_per_adm (DataDir, admPath, adminLevel, station_csv, StationDataDir, a
 
 
 if __name__=="__main__": 
-    for RP in cfg.RPsyr: 
-        #print (readcsv(f"{DataDir}/Données partagées - DNH Mali - 2019/Donne╠ües partage╠ües - DNH Mali - 2019/De╠übit du Niger a╠Ç Ansongo.csv"))
-        event_df = loop_over_stations (cfg.DNHstations, cfg.DataDir, RP)
-        event_gdf = events_per_adm (cfg.DataDir, cfg.admPath, cfg.adminLevel, cfg.DNHstations, cfg.stationsDir, all_events_df, 'Observation', RP)
+
+    #print (readcsv(f"{DataDir}/Données partagées - DNH Mali - 2019/Donne╠ües partage╠ües - DNH Mali - 2019/De╠übit du Niger a╠Ç Ansongo.csv"))
+    event_df = loop_over_stations (cfg.DNHstations, cfg.DataDir, 95)
+    event_gdf = events_per_adm (cfg.DataDir, cfg.admPath, cfg.adminLevel, cfg.DNHstations, cfg.stationsDir, event_df, 'Observation', 95)

@@ -8,13 +8,14 @@ class Visualizer:
     def __init__(self, DataDir, vector_adminMap):
         self.models = ['GloFAS', 'GoogleFloodHub', 'PTM'] # is PTM best way to refer to the current trigger model in the EAP? 
         self.colors = ['cornflowerblue', 'salmon','darkgreen']
+        self.markersize = 12
         self.admin_colors = [
-            "#377eb8", "#ff7f00", "#4daf4a", "#e41a1c", "#984ea3", 
-            "#a65628", "#f781bf", "#999999", "#a6cee3", "#ffff33", 
+            "gold", "cornflowerblue", "#ff7f00", "#4daf4a", "#e41a1c", "#984ea3", 
+            "#a65628", "#f781bf", "#999999", "#a6cee3", 
             "#009E73", "#0072B2"
             ]#['tab:blue', 'tab:orange', 'tab:green', 'tab:red', 'tab:purple', 'tab:brown', 'tab:pink', 'tab:gray', 'tab:olive', 'tab:cyan', ] # adjust pls if you want 
-        self.linestyles = ['-', '--', '-.']
-        self.markerstyles =['o','v']
+        self.linestyles = ['-', '--','-.' ]
+        self.markerstyles =['o','v', 's']
         self.comparisonTypes = ['Observation', 'Impact']
         self.DataDir=DataDir
         self.gdf_shape=checkVectorFormat(vector_adminMap, shapeType='polygon')
@@ -152,94 +153,64 @@ class Visualizer:
         plt.savefig(filePath)
         plt.show()
 
-    def performance_over_param_all(self, admin_units, standard_RP=5, standard_leadtime=168): 
+    def performance_over_leadtime_all(self, admin_units, standard_RP=5): #, standard_leadtime=168): 
         data_all_admin = []
         for admin_unit in admin_units:
             data = collect_performance_measures(admin_unit, self.DataDir, cfg.leadtimes, cfg.RPsyr)
             data_all_admin.append((admin_unit, data))
 
-        fig, axs = plt.subplots(2, 2, figsize=(14, 10))
+        fig, axs = plt.subplots(2, 1, figsize=(14, 10))
         fig.suptitle('Performance Metrics Across Administrative Units', fontsize=16)
-        leadtimes = cfg.leadtimes
-        lt_idx = leadtimes.index(standard_leadtime)
         return_periods = cfg.RPsyr
         RP_idx = return_periods.index(standard_RP)
+        leadtimes = cfg.leadtimes
         leadtimes_x_lim = [min(leadtimes), max(leadtimes)]
-        RP_x_lim = [min(return_periods) - 0.5, max(return_periods) + 0.5]
 
         # Plot 1: POD against leadtime
-        ax = axs[0, 0]
+        ax = axs[0]
         for admin_unit, color in zip(admin_units, self.admin_colors):
-            for model, linestyle in zip(self.models, self.linestyles):
-                for comparison_type, marker in zip(self.comparisonTypes, self.markerstyles):
+            for model, marker in zip(self.models, self.markerstyles):
+                for comparison_type, linestyle in zip(self.comparisonTypes, self.linestyles):
                     ax.plot(leadtimes, 
                             data_all_admin[admin_units.index(admin_unit)][1]['POD'][model][comparison_type][RP_idx, :], 
                             color=color, 
                             linestyle=linestyle, 
                             marker=marker,
+                            markersize=self.markersize,
                             label=f'{admin_unit}, {model}, {comparison_type}')
         ax.set_xlabel('Leadtime (hours)')
         ax.set_ylabel('POD')
         ax.set_xlim(leadtimes_x_lim)
         ax.set_ylim([-0.05, 1.05])
-        ax.text(30, 0.97, f'Return period={standard_RP:.1f} years')
+        ax.text(24, 1.10, f'Return period={standard_RP:.1f} years')
 
-        # Plot 2: POD against return period
-        ax = axs[0, 1]
-        for admin_unit, color in zip(admin_units, self.admin_colors):
-            for model, linestyle in zip(self.models, self.linestyles):
-                for comparison_type, marker in zip(self.comparisonTypes, self.markerstyles):
-                    ax.plot(return_periods, 
-                            data_all_admin[admin_units.index(admin_unit)][1]['POD'][model][comparison_type][:, lt_idx], 
-                            color=color, 
-                            linestyle=linestyle, 
-                            marker=marker)
-        ax.set_xlabel('Return Period (years)')
-        ax.set_ylabel('POD')
-        ax.set_xlim(RP_x_lim)
-        ax.set_ylim([-0.05, 1.05])
-        ax.text(1.6, 0.97, f'Leadtime={standard_leadtime:.0f} hours ({standard_leadtime / 24:.0f} days)')
 
         # Plot 3: FAR against leadtime
-        ax = axs[1, 0]
+        ax = axs[1]
         for admin_unit, color in zip(admin_units, self.admin_colors):
-            for model, linestyle in zip(self.models, self.linestyles):
-                for comparison_type, marker in zip(self.comparisonTypes, self.markerstyles):
+            for model, marker in zip(self.models, self.markerstyles):
+                for comparison_type, linestyle in zip(self.comparisonTypes, self.linestyles):
                     ax.plot(leadtimes, 
                             data_all_admin[admin_units.index(admin_unit)][1]['FAR'][model][comparison_type][RP_idx, :], 
                             color=color, 
                             linestyle=linestyle, 
-                            marker=marker)
+                            marker=marker,
+                            markersize=self.markersize)
         ax.set_xlabel('Leadtime (hours)')
         ax.set_ylabel('FAR')
         ax.set_xlim(leadtimes_x_lim)
         ax.set_ylim([-0.05, 1.05])
-        ax.text(30, 0.97, f'Return period={standard_RP:.1f} years')
-
-        # Plot 4: FAR against return period
-        ax = axs[1, 1]
-        for admin_unit, color in zip(admin_units, self.admin_colors):
-            for model, linestyle in zip(self.models, self.linestyles):
-                for comparison_type, marker in zip(self.comparisonTypes, self.markerstyles):
-                    ax.plot(return_periods, 
-                            data_all_admin[admin_units.index(admin_unit)][1]['FAR'][model][comparison_type][:, lt_idx], 
-                            color=color, 
-                            linestyle=linestyle, 
-                            marker=marker)
-        ax.set_xlabel('Return Period (years)')
-        ax.set_ylabel('FAR')
-        ax.set_xlim(RP_x_lim)
-        ax.set_ylim([-0.05, 1.05])
-        ax.text(1.05, 0.97, f'Leadtime={standard_leadtime:.0f} hours ({standard_leadtime / 24:.0f} days)')
+        ax.text(24, 1.10, f'Return period={standard_RP:.1f} years')
 
         # Custom Legend
         from matplotlib.lines import Line2D
         custom_lines = [
-            Line2D([0], [0], color='black', linestyle=self.linestyles[0], label='GloFAS'),
-            Line2D([0], [0], color='black', linestyle=self.linestyles[1], label='GoogleFloodHub'),
-            Line2D([0], [0], color='black', linestyle=self.linestyles[2], label='PTM'),
-            Line2D([0], [0], color='black', marker=self.markerstyles[0], linestyle='None', label='Observation'),
-            Line2D([0], [0], color='black', marker=self.markerstyles[1], linestyle='None', label='Impact'),
+            Line2D([0], [0], color='black', linestyle=self.linestyles[0], label='Observation'),
+            Line2D([0], [0], color='black', linestyle=self.linestyles[1], label='Impact'),
+            #Line2D([0], [0], color='black', linestyle=self.linestyles[2], label='PTM'),
+            Line2D([0], [0], color='black', marker=self.markerstyles[0], linestyle='None', label='GloFAS'),
+            Line2D([0], [0], color='black', marker=self.markerstyles[1], linestyle='None', label='Google Flood Hub'),
+            Line2D([0], [0], color='black', marker=self.markerstyles[2], linestyle='None', label='PTM')
         ]
         color_lines = [Line2D([0], [0], color=color, lw=2, label=unit) for color, unit in zip(self.admin_colors, admin_units)]
         fig.legend(handles=custom_lines + color_lines, 
@@ -249,7 +220,77 @@ class Visualizer:
                 frameon=False)
 
         plt.tight_layout(rect=[0, 0.08, 1, 0.95])
-        filePath = f'{self.DataDir}/comparison/results/performance_metrics_all_admin_RP{standard_RP:.1f}_leadtime{standard_leadtime}.png'
+        filePath = f'{self.DataDir}/comparison/results/performance_metrics_all_admin_RP{standard_RP:.1f}.png'
+        plt.savefig(filePath)
+        plt.show()
+    def performance_over_return_period_all(self, admin_units, standard_leadtime=168): 
+        data_all_admin = []
+        for admin_unit in admin_units:
+            data = collect_performance_measures(admin_unit, self.DataDir, cfg.leadtimes, cfg.RPsyr)
+            data_all_admin.append((admin_unit, data))
+
+        fig, axs = plt.subplots(2, 1, figsize=(14, 10))
+        fig.suptitle('Performance Metrics across Administrative Units', fontsize=16)
+        leadtimes = cfg.leadtimes
+        lt_idx = leadtimes.index(standard_leadtime)
+        return_periods = cfg.RPsyr
+        RP_x_lim = [min(return_periods) - 0.5, max(return_periods) + 0.5]
+
+
+        # Plot 2: POD against return period
+        ax = axs[0]
+        for admin_unit, color in zip(admin_units, self.admin_colors):
+            for model, marker in zip(self.models, self.markerstyles):
+                for comparison_type, linestyle in zip(self.comparisonTypes, self.linestyles):
+                    ax.plot(return_periods, 
+                            data_all_admin[admin_units.index(admin_unit)][1]['POD'][model][comparison_type][:, lt_idx], 
+                            color=color, 
+                            linestyle=linestyle, 
+                            marker=marker,
+                            markersize=self.markersize)
+        ax.set_xlabel('Return Period (years)')
+        ax.set_ylabel('POD')
+        ax.set_xlim(RP_x_lim)
+        ax.set_ylim([-0.05, 1.05])
+        ax.text(1.5, 1.10, f'Leadtime={standard_leadtime:.0f} hours ({standard_leadtime / 24:.0f} days)')
+
+
+        # Plot 4: FAR against return period
+        ax = axs[1]
+        for admin_unit, color in zip(admin_units, self.admin_colors):
+            for model, marker in zip(self.models, self.markerstyles):
+                for comparison_type, linestyle in zip(self.comparisonTypes, self.linestyles):
+                    ax.plot(return_periods, 
+                            data_all_admin[admin_units.index(admin_unit)][1]['FAR'][model][comparison_type][:, lt_idx], 
+                            color=color, 
+                            linestyle=linestyle, 
+                            marker=marker,
+                            markersize=self.markersize)
+        ax.set_xlabel('Return Period (years)')
+        ax.set_ylabel('FAR')
+        ax.set_xlim(RP_x_lim)
+        ax.set_ylim([-0.05, 1.05])
+        ax.text(1.5, 1.10, f'Leadtime={standard_leadtime:.0f} hours ({standard_leadtime / 24:.0f} days)')
+
+        # Custom Legend
+        from matplotlib.lines import Line2D
+        custom_lines = [
+            Line2D([0], [0], color='black', linestyle=self.linestyles[0], label='Observation'),
+            Line2D([0], [0], color='black', linestyle=self.linestyles[1], label='Impact'),
+            #Line2D([0], [0], color='black', linestyle=self.linestyles[2], label='PTM'),
+            Line2D([0], [0], color='black', marker=self.markerstyles[0], linestyle='None', label='GloFAS'),
+            Line2D([0], [0], color='black', marker=self.markerstyles[1], linestyle='None', label='Google Flood Hub'),
+            Line2D([0], [0], color='black', marker=self.markerstyles[2], linestyle='None', label='PTM')
+        ]
+        color_lines = [Line2D([0], [0], color=color, lw=2, label=unit) for color, unit in zip(self.admin_colors, admin_units)]
+        fig.legend(handles=custom_lines + color_lines, 
+                loc='lower center', 
+                ncol=4, 
+                fontsize='small', 
+                frameon=False)
+
+        plt.tight_layout(rect=[0, 0.08, 1, 0.95])
+        filePath = f'{self.DataDir}/comparison/results/performance_metrics_all_admin_leadtime{standard_leadtime}.png'
         plt.savefig(filePath)
         plt.show()
 
@@ -271,8 +312,9 @@ if __name__ =='__main__':
     # admin_units = [ 'KOULIKORO']
     admin_units = ['BLA', 'SAN','KIDAL', 'TOMINIAN', 'KANGABA', 'KOULIKORO', 'KOLONDIEBA', 'MOPTI', 'BAMAKO', 'SIKASSO', 'SEGOU', 'KATI']
     for leadtime in cfg.leadtimes:
-        for RPyr in cfg.RPsyr:
-            vis.performance_over_param_all (admin_units, standard_RP=RPyr, standard_leadtime=leadtime)
+        vis.performance_over_return_period_all (admin_units, leadtime)
+    for RPyr in cfg.RPsyr:
+        vis.performance_over_leadtime_all (admin_units, standard_RP=RPyr)
     # for admin_unit in admin_units:
     #     data = collect_performance_measures(admin_unit, cfg.DataDir, cfg.leadtimes, cfg.RPsyr)
     #     for leadtime in cfg.leadtimes: 
