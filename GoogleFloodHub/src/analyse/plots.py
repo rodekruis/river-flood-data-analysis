@@ -297,7 +297,7 @@ def map_gauge_coordinates_of_country(df : pd.DataFrame, country : str) -> None:
     """
     gdf = convert_df_to_gdf(df)
     shape = get_country_polygon(get_json_file(
-        "../data/country_code_conversions/country_codes.json"
+        "../data/mappings/country_codes.json"
         )[country])
 
     fig, ax = plt.subplots()

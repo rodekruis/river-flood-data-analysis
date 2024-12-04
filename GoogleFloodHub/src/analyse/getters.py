@@ -7,15 +7,16 @@ import pandas as pd
 import geopandas as gpd
 
 
-def import_ListGauges_data(country: str) -> pd.DataFrame:
+def import_ListGauges_data(country: str, unverified = False) -> pd.DataFrame:
     """
     Imports the list of gauges for a given country from data/processed/ListGauges
 
     :param country: the country for which the list of gauges should be imported
     :return a dataframe containing the .csv data
     """
+    unverified_param = '_unverified' if unverified else ''
     return pd.read_csv(
-        f"../data/processed/ListGauges/{country.lower()}_gauges_listed.csv",
+        f"../data/processed/ListGauges/{country.lower()}_gauges_listed{unverified_param}.csv",
         sep = ';',
         decimal = '.',
         encoding = 'utf-8'
@@ -75,9 +76,34 @@ def import_country_forecast_data(country: str, a: str, b: str) -> pd.DataFrame:
     )
 
 
-def get_country_data(country: str, a: str, b: str) -> pd.DataFrame:
+def get_country_data(country: str, a: str, b: str, unverified = False) -> pd.DataFrame:
     """
     Imports three pieces of data for a given country:
+    - metadata per country (eg containing the gauges and their coordinates)
+    - metadata per gauge (eg containing the danger levels)
+    - forecast data per gauge
+
+    When unverified is set to True, the gauges of unverified quality are
+    also imported
+
+    :param country: the country for which the data should be imported
+    :param a: the starting issue time of interest
+    :param b: the ending issue time of interest
+    :param unverified: whether to import unverified gauges
+    :return dataframes containing the three pieces of data
+    """
+    df_gauges = import_ListGauges_data(country, unverified)
+    df_gauge_meta = import_GetGaugeModel_data(country)
+    df_forecasts = import_country_forecast_data(country, a, b)
+
+    return df_gauges, df_gauge_meta, df_forecasts
+
+
+def get_country_data_unverified(country: str, a: str, b: str) -> pd.DataFrame:
+    """
+    Unverified version of get_country_data(), which means it also
+    imports the gauges of ListGauges of unverified quality. ---
+    Imports of three pieces of data for a given country:
     - metadata per country (eg containing the gauges and their coordinates)
     - metadata per gauge (eg containing the danger levels)
     - forecast data per gauge

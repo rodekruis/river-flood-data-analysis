@@ -31,6 +31,7 @@ def extract_country_data_for_time_delta(
         path_API_key: str,
         country: str,
         delta: Tuple[datetime.datetime, datetime.datetime],
+        quality_verified: bool = False,
         export: bool = True) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
     """
     Combines the calls of the
@@ -45,15 +46,24 @@ def extract_country_data_for_time_delta(
     :param path_API_key: path to the API key file
     :param country: country to extract data from
     :param delta: tuple of two datetime objects (forming a time delta)
+    :param quality_verified: whether to download verified/unverified gauges
+                             (which seems to only work for ListGauges)
     :param export: export data to csv file yes/no
     """
     print(f'Extracting data for {country} from {str(delta[0])[:10]} to {str(delta[1])[:10]}')
+    qv_param = '_unverified' if not quality_verified else ''
 
-    df_gauges = get_ListGauges(country, path_API_key)
+    # As a standard, save both a list of verified and unverified gauges
+    df_gauges = get_ListGauges(country, path_API_key, True)
+    df_gauges_unverified = get_ListGauges(country, path_API_key, False)
     if export:
         export_data_to_csv(
             f"../data/processed/ListGauges/{country}_gauges_listed.csv",
             df_gauges
+        )
+        export_data_to_csv(
+            f"../data/processed/ListGauges/{country}_gauges_listed{qv_param}.csv",
+            df_gauges_unverified
         )
     df_gauge_models = get_GetGaugeModel(path_API_key, df_gauges)
     if export:

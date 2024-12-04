@@ -16,8 +16,8 @@ class GaugesNotAvailableError(Exception):
             "No gauges are available for the requested location."
             "This usually happens when the either the location was entered with a "
             "typo, when the location does not have a valid country code in the "
-            "data/country_code_conversions/ folder, when the location was entered "
-            "with a typo, or when the location is not available at all in the API."
+            "data/mappings/ folder, when the location was entered with a typo, "
+            "or when the location is not available at all in the API."
         )
     
 

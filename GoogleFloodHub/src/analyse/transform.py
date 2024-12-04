@@ -29,7 +29,7 @@ def convert_country_code_to_iso_a3(country_code : str) -> str:
     :return: the ISO A3 code
     """
     return get_json_file(
-        "../data/country_code_conversions/country_codes_to_ISO_A3.json"
+        "../data/mappings/country_codes_to_ISO_A3.json"
         )[country_code]
 
 
