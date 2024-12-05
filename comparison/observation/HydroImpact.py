@@ -5,6 +5,7 @@ from GloFAS.GloFAS_prep.text_formatter import remove_accents, capitalize
 import scipy.stats as stats
 from comparison.pointMatching import attributePoints_to_Polygon
 import geopandas as gpd
+import numpy as np
 from scipy.stats import genextreme
 
 def parse_date_with_fallback(date_str, year):
@@ -70,7 +71,7 @@ def QRP_fit (hydro_df, RP):
     discharge_value = stats.gumbel_r.ppf(1 - 1/RP, loc, scale)
     return discharge_value
 
-def Q_GEV_fit_daily(hydro_df, percentile): 
+def Q_GEV_fit(hydro_df, percentile): 
     """
     Fits a GEV distribution to the daily discharge values and calculates the discharge 
     corresponding to a given percentile.
@@ -88,9 +89,16 @@ def Q_GEV_fit_daily(hydro_df, percentile):
 
     # Extract daily discharge values
     daily_discharge = hydro_df['Value']
+    #  Remove non-finite values
+    daily_discharge_cleaned = daily_discharge[np.isfinite(daily_discharge)]
 
-    # Fit a GEV distribution to the daily discharge values
-    shape, loc, scale = genextreme.fit(daily_discharge)
+    # Check if there are still issues
+    if daily_discharge_cleaned.empty:
+        raise ValueError("All data was non-finite after cleaning. Please check your dataset.")
+
+    # Fit a GEV distribution
+    shape, loc, scale = genextreme.fit(daily_discharge_cleaned)
+
 
     # Calculate the discharge value corresponding to the specified percentile
     discharge_value = genextreme.ppf(percentile / 100, shape, loc=loc, scale=scale)
@@ -161,8 +169,8 @@ def createEvent(trigger_df):
             while r < len(trigger_df) and trigger_df.iloc[r]['Trigger'] == 1:
                 possible_endtime = trigger_df.iloc[r]['Date']
                 processed_rows[r] = True  # Mark row as processed
-                r += 1
                 row = trigger_df.iloc[r]
+                r += 1
                 # print(f"Marked row, {row[f'ADM{adminLevel}']}, {row['ValidTime']}, is processed")
                 # print (r)
             
@@ -206,8 +214,9 @@ def loop_over_stations(station_csv, DataDir, RP):
         stationPath = rf"{hydrodir}/{BasinName}_{StationName}.csv"
         try: 
             hydro_df = transform_hydro (stationPath)
+            print (f'calculating {StationName}, in {BasinName}')
         except: 
-            print (f'no discharge measures found for station {StationName} in {BasinName}')
+            # print (f'no discharge measures found for station {StationName} in {BasinName}')
             continue
 
         trigger_df = stampHydroTrigger (hydro_df, RP, StationName)
@@ -245,5 +254,5 @@ def events_per_adm (DataDir, admPath, adminLevel, station_csv, StationDataDir, a
 if __name__=="__main__": 
 
     #print (readcsv(f"{DataDir}/Données partagées - DNH Mali - 2019/Donne╠ües partage╠ües - DNH Mali - 2019/De╠übit du Niger a╠Ç Ansongo.csv"))
-    event_df = loop_over_stations (cfg.DNHstations, cfg.DataDir, 95)
-    event_gdf = events_per_adm (cfg.DataDir, cfg.admPath, cfg.adminLevel, cfg.DNHstations, cfg.stationsDir, event_df, 'Observation', 95)
+    event_df = loop_over_stations (cfg.DNHstations, cfg.DataDir, 1)
+    event_gdf = events_per_adm (cfg.DataDir, cfg.admPath, cfg.adminLevel, cfg.DNHstations, cfg.stationsDir, event_df, 'Observation', 1)

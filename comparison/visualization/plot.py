@@ -21,7 +21,8 @@ class Visualizer:
         self.gdf_shape=checkVectorFormat(vector_adminMap, shapeType='polygon')
         self.cmap_r = 'RdYlBu_r' # 'cmc.batlow_r'  # Reversed for FAR
         self.cmap = 'RdYlBu' # 'cmc.batlow'    # Default for POD
-
+        self.POD_threshold = 0.6 # to colour everything below it red
+        self.FAR_threshold = 0.3 # to colour everything above it red 
     def map_performance(self, scores_by_commune_gdf, RPyr, leadtime, comparisonType, model):
         """
         Visualize performance metrics (POD, FAR, CSI, POFD, Accuracy, Precision) on separate maps.
@@ -159,8 +160,8 @@ class Visualizer:
             data = collect_performance_measures(admin_unit, self.DataDir, cfg.leadtimes, cfg.RPsyr)
             data_all_admin.append((admin_unit, data))
 
-        fig, axs = plt.subplots(2, 1, figsize=(14, 10))
-        fig.suptitle('Performance Metrics Across Administrative Units', fontsize=16)
+        fig, axs = plt.subplots(2, 1, figsize=(10, 7))
+        fig.suptitle('Performance metrics across administrative units over return period', fontsize=12)
         return_periods = cfg.RPsyr
         RP_idx = return_periods.index(standard_RP)
         leadtimes = cfg.leadtimes
@@ -180,6 +181,7 @@ class Visualizer:
                             label=f'{admin_unit}, {model}, {comparison_type}')
         ax.set_xlabel('Leadtime (hours)')
         ax.set_ylabel('POD')
+        ax.fill_between(leadtimes, ax.get_ylim()[0], self.POD_threshold, color='red', alpha=0.3)
         ax.set_xlim(leadtimes_x_lim)
         ax.set_ylim([-0.05, 1.05])
         ax.text(24, 1.10, f'Return period={standard_RP:.1f} years')
@@ -198,6 +200,7 @@ class Visualizer:
                             markersize=self.markersize)
         ax.set_xlabel('Leadtime (hours)')
         ax.set_ylabel('FAR')
+        ax.fill_between(leadtimes, ax.get_ylim()[1], self.FAR_threshold, color='red', alpha=0.3)
         ax.set_xlim(leadtimes_x_lim)
         ax.set_ylim([-0.05, 1.05])
         ax.text(24, 1.10, f'Return period={standard_RP:.1f} years')
@@ -223,14 +226,15 @@ class Visualizer:
         filePath = f'{self.DataDir}/comparison/results/performance_metrics_all_admin_RP{standard_RP:.1f}.png'
         plt.savefig(filePath)
         plt.show()
+
     def performance_over_return_period_all(self, admin_units, standard_leadtime=168): 
         data_all_admin = []
         for admin_unit in admin_units:
             data = collect_performance_measures(admin_unit, self.DataDir, cfg.leadtimes, cfg.RPsyr)
             data_all_admin.append((admin_unit, data))
 
-        fig, axs = plt.subplots(2, 1, figsize=(14, 10))
-        fig.suptitle('Performance Metrics across Administrative Units', fontsize=16)
+        fig, axs = plt.subplots(2, 1, figsize=(10, 7))
+        fig.suptitle('Performance metrics across administrative units over lead time', fontsize=12)
         leadtimes = cfg.leadtimes
         lt_idx = leadtimes.index(standard_leadtime)
         return_periods = cfg.RPsyr
@@ -248,10 +252,12 @@ class Visualizer:
                             linestyle=linestyle, 
                             marker=marker,
                             markersize=self.markersize)
+        
         ax.set_xlabel('Return Period (years)')
         ax.set_ylabel('POD')
         ax.set_xlim(RP_x_lim)
         ax.set_ylim([-0.05, 1.05])
+        ax.fill_between(RP_x_lim, ax.get_ylim()[0], self.POD_threshold, color='red', alpha=0.3)
         ax.text(1.5, 1.10, f'Leadtime={standard_leadtime:.0f} hours ({standard_leadtime / 24:.0f} days)')
 
 
@@ -270,6 +276,7 @@ class Visualizer:
         ax.set_ylabel('FAR')
         ax.set_xlim(RP_x_lim)
         ax.set_ylim([-0.05, 1.05])
+        ax.fill_between(RP_x_lim, ax.get_ylim()[1], self.FAR_threshold, color='red', alpha=0.3)
         ax.text(1.5, 1.10, f'Leadtime={standard_leadtime:.0f} hours ({standard_leadtime / 24:.0f} days)')
 
         # Custom Legend
