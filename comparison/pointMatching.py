@@ -2,11 +2,14 @@ from pathlib import Path
 import geopandas as gpd
 import pandas as pd
 import numpy as np
+import xarray as xr 
 from shapely.geometry import Point
 from scipy.spatial import cKDTree
 from GloFAS.GloFAS_prep.vectorCheck import checkVectorFormat
 import GloFAS.GloFAS_prep.configuration as cfg 
 from GloFAS.GloFAS_prep.text_formatter import remove_accents
+
+from geopy.distance import geodesic
 
 def findclosestpoint(point_x, point_y, target_gdf):
     '''
@@ -30,6 +33,62 @@ def findclosestpoint(point_x, point_y, target_gdf):
     tree = cKDTree(target_coords)  # Build KDTree for fast nearest neighbor search
     dist, idx = tree.query([(point_x, point_y)], k=1)  # Find closest point
     return target_gdf.iloc[idx[0]]  # Return row of the closest point
+
+
+def find_closestcorresponding_point(point_x, point_y, ups_area_point_m, glofas_ups_area_xr, radius_m=5000):
+    """
+    Within a specified radius, find the grid cell in glofas_ups_area_xr
+    whose upstream area value is closest to the given station's upstream area value.
+
+    Parameters:
+        point_x (float): Longitude of the station.
+        point_y (float): Latitude of the station.
+        ups_area_point_m (float): Upstream area for the specific station (in m^3).
+        glofas_ups_area_xr (xr.DataArray): Upstream area values in the model grid (in m^3).
+        radius_m (float): Radius within which to search (in meters).
+
+    Returns:
+        model_point_x (float): Longitude of the best-matching grid cell.
+        model_point_y (float): Latitude of the best-matching grid cell.
+        best_area_diff (float): Absolute difference between station and model upstream areas.
+    """
+
+    # Extract coordinates and values from the DataArray
+    lats = glofas_ups_area_xr["latitude"].values
+    lons = glofas_ups_area_xr["longitude"].values
+    areas = glofas_ups_area_xr.values
+
+    # Create a meshgrid of the coordinates
+    lon_grid, lat_grid = np.meshgrid(lons, lats)
+
+    # Flatten arrays for easier iteration
+    flat_lons = lon_grid.flatten()
+    flat_lats = lat_grid.flatten()
+    flat_areas = areas.flatten()
+
+    # Initialize variables to store the best match
+    best_area_diff = float('inf')
+    best_point = (None, None)
+
+    # Iterate over all grid cells
+    for lon, lat, area in zip(flat_lons, flat_lats, flat_areas):
+        # Calculate geodesic distance from the station point
+        distance = geodesic((point_y, point_x), (lat, lon)).meters
+        
+        # Check if the cell is within the search radius
+        if distance <= radius_m:
+            # Compute the absolute difference in upstream area
+            area_diff = abs(area - ups_area_point_m)
+
+            # Update the best match if this cell's area is closer to the target value
+            if area_diff < best_area_diff:
+                best_area_diff = area_diff
+                best_point = (lon, lat)
+
+    # Unpack the best point's coordinates
+    model_point_x, model_point_y = best_point
+
+    return model_point_x, model_point_y, best_area_diff
 
 
 def matchPoints(

@@ -16,12 +16,12 @@ class FloodDefiner:
         
         # make everything capital
         floodProbability_gdf[f'ADM{self.adminLevel}'] = floodProbability_gdf[f'ADM{self.adminLevel}'].apply(lambda x: unidecode.unidecode(x).upper())
-        
-        floodProbability_gdf['StartValidTime'] = pd.to_datetime(floodProbability_gdf['ValidTime'], errors='coerce') # - timedelta(days=self.buffervalid)
+        # start date is date of validity of the forecast 
+        floodProbability_gdf['Start Date'] = pd.to_datetime(floodProbability_gdf['ValidTime'], errors='coerce') # - timedelta(days=self.buffervalid)
         # incorporate actionlifetime
-        floodProbability_gdf['EndValidTime'] = pd.to_datetime(floodProbability_gdf['ValidTime'], errors='coerce') + timedelta(days=actionLifetime)
-        floodProbability_gdf['StartValidTime'] = pd.to_datetime(floodProbability_gdf['StartValidTime'], format='%d/%m/%Y', errors='coerce')
-        floodProbability_gdf['EndValidTime'] = pd.to_datetime(floodProbability_gdf['EndValidTime'], format='%d/%m/%Y', errors='coerce')
+        floodProbability_gdf['End Date'] = pd.to_datetime(floodProbability_gdf['ValidTime'], errors='coerce') + timedelta(days=actionLifetime)
+        floodProbability_gdf['Start Date'] = pd.to_datetime(floodProbability_gdf['Start Date'], format='%d/%m/%Y', errors='coerce')
+        floodProbability_gdf['End Date'] = pd.to_datetime(floodProbability_gdf['End Date'], format='%d/%m/%Y', errors='coerce')
         # Add Trigger column based on probability threshold
         floodProbability_gdf['Trigger'] = np.where(floodProbability_gdf['Probability'] >= triggerProb, 1, 0)
 
@@ -51,25 +51,25 @@ class FloodDefiner:
             # Checking if the current row and next row are both part of an event (Trigger == 1), and the trigger happens in the same adiministrative unit
             elif row['Trigger'] == 1 and r + 1 < len(triggerstamped_gdf) and triggerstamped_gdf.iloc[r + 1]['Trigger'] == 1 and row[f'ADM{self.adminLevel}']==triggerstamped_gdf.iloc[r + 1][f'ADM{self.adminLevel}']:
                 Event = 1
-                StartValidTime = row['StartValidTime'] 
+                StartDate = row['Start Date'] 
                 # Continue until the end of the event where 'Trigger' is no longer 1
                 while r < len(triggerstamped_gdf) and triggerstamped_gdf.iloc[r]['Trigger'] == 1:
-                    possible_endtime = triggerstamped_gdf.iloc[r]['EndValidTime']
+                    possible_endtime = triggerstamped_gdf.iloc[r]['End Date']
                     processed_rows[r] = True  # Mark row as processed
                     r += 1
                     row = triggerstamped_gdf.iloc[r]
                     # print(f"Marked row, {row[f'ADM{adminLevel}']}, {row['ValidTime']}, is processed")
                     # print (r)
                 
-                # The final EndValidTime after the loop finishes
+                # The final End Date after the loop finishes
                 final_endtime = possible_endtime
                     
                 # Create a temporary dataframe for the current event
                 temp_event_df = pd.DataFrame({
                     f'ADM{self.adminLevel}': [row[f'ADM{self.adminLevel}']],
                     'Event': [Event],
-                    'StartValidTime': [StartValidTime],
-                    'EndValidTime': [final_endtime],
+                    'Start Date': [StartDate],
+                    'End Date': [final_endtime],
                     'geometry': row['geometry']
                 })
                 
@@ -90,7 +90,7 @@ class FloodDefiner:
         else:
             # Return an empty GeoDataFrame if no events were found
             # Initialize an empty dataframe 
-            events_df = pd.DataFrame(columns=[f'ADM{self.adminLevel}', 'Event', 'StartValidTime', 'EndValidTime', 'geometry'])
+            events_df = pd.DataFrame(columns=[f'ADM{self.adminLevel}', 'Event', 'Start Date', 'End Date', 'geometry'])
             return gpd.GeoDataFrame(events_df, geometry='geometry')
 
     def EventMaker(self, floodProbability_gdf, actionLifetime, triggerProb): 
