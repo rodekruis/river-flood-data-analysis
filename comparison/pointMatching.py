@@ -34,19 +34,6 @@ def findclosestpoint(point_x, point_y, target_gdf):
     dist, idx = tree.query([(point_x, point_y)], k=1)  # Find closest point
     return target_gdf.iloc[idx[0]]  # Return row of the closest point
 
-def find_closestcorresponding_point (point_x, point_y, ups_area_point_m,  glofas_ups_area_xr, radius_m = 5000): 
-    '''within the radius_m radius, from the point_x and point_y, find the cell in glofas_ups_area_xr for which the value corresponds most to ups_area_point
-    point_x: coordinate of station x 
-    point_y: coordinate of station y 
-    ups_area_point: upstream area (also called catchment area) for that specific station in m^3
-    model_ups_area_xr: xr.DataArray entailing the upstream areas in the model m^3
-    radius_m = radius around the point for which to look for the most corresponding upstream area value
-    '''
-    import numpy as np
-import xarray as xr
-from geopy.distance import geodesic
-
-
 
 def find_closestcorresponding_point(point_x, point_y, ups_area_point_m, glofas_ups_area_xr, radius_m=5000):
     """
@@ -67,8 +54,8 @@ def find_closestcorresponding_point(point_x, point_y, ups_area_point_m, glofas_u
     """
 
     # Extract coordinates and values from the DataArray
-    lats = glofas_ups_area_xr["lat"].values
-    lons = glofas_ups_area_xr["lon"].values
+    lats = glofas_ups_area_xr["latitude"].values
+    lons = glofas_ups_area_xr["longitude"].values
     areas = glofas_ups_area_xr.values
 
     # Create a meshgrid of the coordinates
