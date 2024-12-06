@@ -81,7 +81,6 @@ class Visualizer:
         plt.show()
 
     def performance_over_param(self, admin_unit, data, standard_RP=5, standard_leadtime=168): 
-        
         fig, axs = plt.subplots(2, 2, figsize=(10, 7))
         fig.suptitle(f'Performance Metrics for {admin_unit}', fontsize=16)
         leadtimes = data['leadtimes']
