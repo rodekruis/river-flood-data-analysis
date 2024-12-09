@@ -25,7 +25,7 @@ for i, row in stations_upsarea_df.iterrows():
         ups_area_point_m=row['Catchment area (km2)'] * 1e6,  # Convert from km² to m²
         stationName=row['Station names'],
         glofas_ups_area_xr=glofas_ups_area_da,
-        radius_m=50000
+        radius_m=100000
     )
     stations_upsarea_df.loc[i, 'Glofas_Point_X'] = glofas_x
     stations_upsarea_df.loc[i, 'Glofas_Point_Y'] = glofas_y

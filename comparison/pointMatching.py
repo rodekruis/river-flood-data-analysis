@@ -164,7 +164,7 @@ def find_corresponding_point_within_box(station_lon, station_lat, ups_area_point
         linewidth=1.5,  # Border thickness
         label=f"GloFAS location corresponding to minimal upstream area difference "
         )
-    plt.plot ([],[], label= f'found within {radius_m/1e3:.0f} km radius (difference={best_area_diff/1e6:.1f} km²)')
+    plt.plot ([],[], ' ', label= f'found within {radius_m/1e3:.0f} km radius (difference={best_area_diff/1e6:.1f} km²)')
     # Add the colorbar
     # sm = plt.cm.ScalarMappable(cmap=cmap, norm=norm)
     # sm.set_array([])  # Required for ScalarMappable
