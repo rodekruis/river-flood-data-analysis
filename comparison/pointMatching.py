@@ -3,12 +3,13 @@ import geopandas as gpd
 import pandas as pd
 import numpy as np
 import xarray as xr 
+import matplotlib.pyplot as plt
 from shapely.geometry import Point
 from scipy.spatial import cKDTree
 from GloFAS.GloFAS_prep.vectorCheck import checkVectorFormat
 import GloFAS.GloFAS_prep.configuration as cfg 
 from GloFAS.GloFAS_prep.text_formatter import remove_accents
-
+import matplotlib.colors as mcolors
 from geopy.distance import geodesic
 
 def findclosestpoint(point_x, point_y, target_gdf):
@@ -35,28 +36,76 @@ def findclosestpoint(point_x, point_y, target_gdf):
     return target_gdf.iloc[idx[0]]  # Return row of the closest point
 
 
-def find_closestcorresponding_point(point_x, point_y, ups_area_point_m, glofas_ups_area_xr, radius_m=5000):
+def find_corresponding_point_within_box(station_lon, station_lat, ups_area_point_m, glofas_ups_area_xr, stationName, radius_m=10000):
     """
-    Within a specified radius, find the grid cell in glofas_ups_area_xr
-    whose upstream area value is closest to the given station's upstream area value.
+    For a given station point, find the grid cell in the glofas_ups_area_xr
+    within a bounding box whose upstream area value is closest to the station's upstream area value.
 
     Parameters:
         point_x (float): Longitude of the station.
         point_y (float): Latitude of the station.
         ups_area_point_m (float): Upstream area for the specific station (in m^3).
         glofas_ups_area_xr (xr.DataArray): Upstream area values in the model grid (in m^3).
-        radius_m (float): Radius within which to search (in meters).
+        radius_m (float): Radius around the station to define the bounding box (in meters).
 
     Returns:
         model_point_x (float): Longitude of the best-matching grid cell.
         model_point_y (float): Latitude of the best-matching grid cell.
-        best_area_diff (float): Absolute difference between station and model upstream areas.
+        best_area_diff (float): Absolute difference between station and grid cell upstream areas.
     """
+    # Approximate degrees per meter (latitude/longitude adjustment)
+    print("Latitude range in dataset:", glofas_ups_area_xr.latitude.min().values, glofas_ups_area_xr.latitude.max().values)
+    print("Longitude range in dataset:", glofas_ups_area_xr.longitude.min().values, glofas_ups_area_xr.longitude.max().values)
 
-    # Extract coordinates and values from the DataArray
-    lats = glofas_ups_area_xr["latitude"].values
-    lons = glofas_ups_area_xr["longitude"].values
-    areas = glofas_ups_area_xr.values
+    degree_buffer = radius_m / 111000  # 1 degree latitude ~ 111 km
+    lat_min = station_lat - degree_buffer
+    lat_max = station_lat + degree_buffer
+    lon_min = station_lon - degree_buffer
+    lon_max = station_lon + degree_buffer
+
+    print(f"Latitude bounds: {lat_min} to {lat_max}")
+    print(f"Longitude bounds: {lon_min} to {lon_max}")
+    lat_resolution = np.diff(glofas_ups_area_xr.latitude.values).mean()
+    lon_resolution = np.diff(glofas_ups_area_xr.longitude.values).mean()
+
+    print(f"Latitude resolution: {lat_resolution} degrees")
+    print(f"Longitude resolution: {lon_resolution} degrees")
+    # Subset the glofas grid within the bounding box
+    subset = glofas_ups_area_xr.sel(
+        latitude=slice(lat_max, lat_min),
+        longitude=slice(lon_min, lon_max)
+    )
+    
+
+
+
+
+    # Extract the coordinates and values from the subset
+    lats = subset["latitude"].values
+    lons = subset["longitude"].values
+    area = subset.values
+
+    area_difference = subset - ups_area_point_m
+
+    plt.figure(figsize=(8, 6))
+    area_difference.plot()
+    plt.title(f"Area difference for station, for longitude latitude selection")
+    plt.xlabel("Longitude")
+    plt.ylabel("Latitude")
+    plt.show()
+      # Save as file
+    plt.close() 
+    # Extract the coordinates and values from the subset
+    lats = subset["latitude"].values
+    lons = subset["longitude"].values
+    area = subset.values
+    # area_difference = abs(area - ups_area_point_m)
+    # area_difference.plot() 
+
+        # Extract the coordinates and values from the subset
+    lats = subset["latitude"].values
+    lons = subset["longitude"].values
+    areas = subset.values
 
     # Create a meshgrid of the coordinates
     lon_grid, lat_grid = np.meshgrid(lons, lats)
@@ -70,13 +119,7 @@ def find_closestcorresponding_point(point_x, point_y, ups_area_point_m, glofas_u
     best_area_diff = float('inf')
     best_point = (None, None)
 
-    # Iterate over all grid cells
     for lon, lat, area in zip(flat_lons, flat_lats, flat_areas):
-        # Calculate geodesic distance from the station point
-        distance = geodesic((point_y, point_x), (lat, lon)).meters
-        
-        # Check if the cell is within the search radius
-        if distance <= radius_m:
             # Compute the absolute difference in upstream area
             area_diff = abs(area - ups_area_point_m)
 
@@ -85,10 +128,55 @@ def find_closestcorresponding_point(point_x, point_y, ups_area_point_m, glofas_u
                 best_area_diff = area_diff
                 best_point = (lon, lat)
 
-    # Unpack the best point's coordinates
-    model_point_x, model_point_y = best_point
+    model_point_lon, model_point_lat = best_point
+        ###################################################################
+    # Create a new figure
+    plt.figure(figsize=(10, 8))
 
-    return model_point_x, model_point_y, best_area_diff
+    # Plot the data and retrieve colormap and normalization
+    plot = (subset / 1e6).plot(
+        cmap="viridis",  # Consistent color scheme
+        cbar_kwargs={"label": "Upstream Area (km²)"}  # Add colorbar label  # We'll handle the colorbar separately
+    )
+    cmap = plt.get_cmap("viridis")  # Same colormap as the plot
+    norm = mcolors.Normalize(vmin=subset.min().item(), vmax=subset.max().item())  # Normalize based on subset
+
+    # Get the color for the station point based on upstream area value
+    
+    point_color = cmap(norm(ups_area_point_m))  # Map the value to the colormap
+
+    # Overlay the station point
+    plt.scatter(
+        station_lon,
+        station_lat,
+        s=200,  # Size of the marker
+        edgecolor="black",  # Black border
+        facecolor=point_color,  # Fill color based on upstream area value
+        linewidth=1.5,  # Border thickness
+        label=f"Upstream area documented by DNH at station {stationName} = {ups_area_point_m/1e6:.0f} km²"
+        )
+    plt.scatter(
+        model_point_lon,
+        model_point_lat,
+        s=200,  # Size of the marker
+        edgecolor="white",  # white border
+        facecolor='none',  # leave fill in empty
+        linewidth=1.5,  # Border thickness
+        label=f"GloFAS location corresponding to minimal upstream area difference "
+        )
+    plt.plot ([],[], label= f'found within {radius_m/1e3:.0f} km radius (difference={best_area_diff/1e6:.1f} km²)')
+    # Add the colorbar
+    # sm = plt.cm.ScalarMappable(cmap=cmap, norm=norm)
+    # sm.set_array([])  # Required for ScalarMappable
+
+    # Add title, labels, and legend
+    plt.title(f"Subset for Station: {stationName}")
+    plt.xlabel("Longitude")
+    plt.ylabel("Latitude")
+    plt.legend(loc="upper right", fontsize=10, frameon=True)
+    plt.show()
+    plt.close()
+    return model_point_lon, model_point_lat, best_area_diff
 
 
 def matchPoints(

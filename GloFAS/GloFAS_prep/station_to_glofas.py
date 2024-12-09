@@ -1,33 +1,35 @@
-from comparison.pointMatching import find_closestcorresponding_point
+from comparison.pointMatching import find_corresponding_point_within_box
 import pandas as pd 
 import xarray as xr 
 import GloFAS.GloFAS_prep.configuration as cfg
-
+area = cfg.MaliArea
 # Load data
-stations_ups_csv = f'{cfg.DataDir}/Stations_ups_area_DNH.csv'
-upstream_area_nc = f"{cfg.DataDir}/uparea_glofas_v4_0.nc"
+stations_ups_csv = f'{cfg.DataDir}/DNHMali_2019/Stations_ups_area_DNH.csv'
+upstream_area_nc = f"{cfg.DataDir}/auxiliary/uparea_glofas_v4_0.nc"
 
 stations_upsarea_df = pd.read_csv(stations_ups_csv)
-
+print (stations_upsarea_df.head)
 glofas_ups_area_ds = xr.open_dataset(upstream_area_nc, engine="h5netcdf")
-glofas_ups_area_da = glofas_ups_area_ds['uparea']  # Access the upstream area variable
-
-# A wrapper function for apply
-def find_closest_wrapper(row):
-    return find_closestcorresponding_point(
-        point_x=row['Lon'],
-        point_y=row['Lat'],
-        ups_area_point_m=row['Catchment area (km2)'] * 1e6,  # Convert from km² to m²
-        glofas_ups_area_xr=glofas_ups_area_da,
-        radius_m=6000
-    )
+#glofas_ups_area_ds["longitude"] = glofas_ups_area_ds["longitude"].where(glofas_ups_area_ds["longitude"] < 180, glofas_ups_area_ds["longitude"] - 360)
+glofas_ups_area_da = glofas_ups_area_ds['uparea'] #.sel(
+    #     latitude=slice(area[0], area[2]),
+    #     longitude=slice(area[1], area[3])
+    # )  # Access the upstream area variable
+# glofas_ups_area_da.plot()
 
 # Apply the function row-wise
-results = stations_upsarea_df.apply(find_closest_wrapper, axis=1)
-
-# Extract results into separate columns
-stations_upsarea_df['Glofas_Point_X'], stations_upsarea_df['Glofas_Point_Y'], stations_upsarea_df['Area_Diff'] = zip(*results)
-
+for i, row in stations_upsarea_df.iterrows():
+    glofas_x, glofas_y, area_diff = find_corresponding_point_within_box(
+        station_lon=row['Lon'],
+        station_lat=row['Lat'],
+        ups_area_point_m=row['Catchment area (km2)'] * 1e6,  # Convert from km² to m²
+        stationName=row['Station names'],
+        glofas_ups_area_xr=glofas_ups_area_da,
+        radius_m=50000
+    )
+    stations_upsarea_df.loc[i, 'Glofas_Point_X'] = glofas_x
+    stations_upsarea_df.loc[i, 'Glofas_Point_Y'] = glofas_y
+    stations_upsarea_df.loc[i, 'Area_Diff'] = area_diff
 
 # Print or save the updated DataFrame
 print(stations_upsarea_df.head())
