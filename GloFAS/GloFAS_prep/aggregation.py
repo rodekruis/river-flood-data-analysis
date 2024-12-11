@@ -49,15 +49,15 @@ def query(rasterDA, pointGDF):
     rasterDA: xarray.DataArray with raster data
     '''
     coordinates = pointGDF.get_coordinates().values  # 2D array with latitudes and longitudes
-    point_latitude = coordinates[:, 0]  # Extract all latitudes (first column)
-    point_longitude = coordinates[:, 1]  # Extract all longitudes (second column)
+    point_latitude = coordinates[:, 1]  # Extract all latitudes (first column) # REVERSE for now, leads to rsults 
+    point_longitude = coordinates[:, 0]  # Extract all longitudes (second column) # Reverse becaise od l
     
     # Query the raster data for each point and store the result in a new 'rastervalue' column
     pointGDF['rastervalue'] = [
         rasterDA.sel(latitude=lat, longitude=lon, method='nearest').values.item()  # Get scalar value
         for lat, lon in zip(point_latitude, point_longitude)
         ]
-    
+    # print (pointGDF['rastervalue'])
     return pointGDF
 
 

@@ -4,6 +4,7 @@ import pandas as pd
 from pathlib import Path
 from rasterstats import zonal_stats
 from shapely import wkt
+from shapely.geometry import Point
 import rioxarray as rio
 
 def df_from_txt_or_csv (vector): 
@@ -108,14 +109,20 @@ def checkVectorFormat(vector, shapeType=None, crs='EPSG:4326', placement='real')
                 raise ValueError("File must be of type '.shp', '.gpkg', or '.csv'.")
 
         # If vector is already a GeoDataFrame
+        elif isinstance (vector, pd.Series):
+            if shapeType=='point':
+                geometry= [Point(vector['Longitude'], vector['Latitude'])]
+                vectorGDF = gpd.GeoDataFrame([vector], geometry=geometry, crs=crs)
+            else: 
+                print ('sorry not yet polygon supported for pandas series')
+
         elif isinstance(vector, gpd.GeoDataFrame):
             vectorGDF = vector.to_crs(crs) if vector.crs != crs else vector
-
         else:
             raise TypeError("The input vector must be a file path (str or Path) or a GeoDataFrame.")
         return vectorGDF
-    except: 
-        print ('data source invalid, return empty dataframe')
+    except Exception as e: 
+        print (f'data source of vector invalid, return empty dataframe. error= {e}')
         vectorGDF = pd.DataFrame()
         return vectorGDF
 

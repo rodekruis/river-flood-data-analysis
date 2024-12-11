@@ -18,13 +18,13 @@ lakesPath = DataDir / f'Visualization/waterbodies/waterbodies_merged.shp'
 stationsDir = DataDir / f'stations'
 DNHstations = stationsDir / f"Stations_DNH.csv"
 googlestations = stationsDir / 'coords_google_gauges_Mali.csv'
-GloFASstations = stationsDir / 'GloFAS_MaliStations_v4.csv'
+GloFASstations = stationsDir / 'GloFAS_to_DNH_resembling_uparea_50km.csv'
 impact_csvPath = DataDir / "impact/MergedImpactData.csv"
 settlements_tif = DataDir / "GlobalHumanSettlement/GHS_BUILT_S_E2030_GLOBE_R2023A_54009_100_V1_0.tif"
 
 crs = f'EPSG:4326' 
 RPsyr = [1.5, 2.0, 5.0, 10.0] # return period threshold in years 
-leadtimes = [24, 72, 96, 120,144, 168] # hours
+leadtimes = [72, 96, 120,144, 168] # add also 24hours
 startYear = 2004 # could be 2004 but needs to be 2016 since there is no google data available before 
 endYear = 2023 # 00:00 1st of january of that year, so up to but not including
 triggerProb = 0.6
