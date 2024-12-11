@@ -409,28 +409,28 @@ def plot_Niger_river_downstream_flow_stat(
     plt.show()
 
 
-def add_return_periods(
-        ax: mpl.axes, gauge_return_periods_ds: xr.core.dataset.Dataset,
-        thresholds: Tuple[int], set_legend: bool = True
-    ) -> None:
-    """
-    Adds horizontal lines with return periods to a plot
+# def add_return_periods(
+#         ax: mpl.axes, gauge_return_periods_ds: xr.core.dataset.Dataset,
+#         thresholds: Tuple[int], set_legend: bool = True
+#     ) -> None:
+#     """
+#     Adds horizontal lines with return periods to a plot
 
-    :param ax: axis to add the return periods to
-    :param gauge_return_periods_ds: return periods dataset
-    :param thresholds: list of thresholds to add return periods for
-    """
-    colors = ('yellow', 'orange', 'red', 'brown', 'black')
+#     :param ax: axis to add the return periods to
+#     :param gauge_return_periods_ds: return periods dataset
+#     :param thresholds: list of thresholds to add return periods for
+#     """
+#     colors = ('yellow', 'orange', 'red', 'brown', 'black')
 
-    # if there is only one colour, set it to orange
-    # add legend, make a legend with a line 
-    for threshold, color in zip(thresholds, colors):
-        ax.axhline(
-            y = gauge_return_periods_ds[f'return_period_{threshold}'].item(),
-            color = color if len(thresholds) > 1 else 'orange',
-            label = f'{threshold}-yr return period' if set_legend else None,
-            linestyle = '--'
-        )
+#     # if there is only one colour, set it to orange
+#     # add legend, make a legend with a line 
+#     for threshold, color in zip(thresholds, colors):
+#         ax.axhline(
+#             y = gauge_return_periods_ds[f'return_period_{threshold}'].item(),
+#             color = color if len(thresholds) > 1 else 'orange',
+#             label = f'{threshold}-yr return period' if set_legend else None,
+#             linestyle = '--'
+#         )
 
 
 def plot_reforecast(
