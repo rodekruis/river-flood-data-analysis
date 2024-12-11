@@ -1,31 +1,42 @@
 import zipfile 
 import rioxarray as rio
-import fiona 
+import fiona
+import cfgrib
 import xarray as xr 
+# print(xr.backends.list_engines())
+#import eccodes 
+
 
 def unzipGloFAS (DataDir, leadtime, month, day, year=None):
     '''month : month as number as string, so January = '01' (Type:Str)
         day : day as number as string, so first day of the month = '01' (Type:Str)
         year : is in file name if not forecast but reforecast'''
     if year==None:
-        zipRasterPath = f'{DataDir}/GloFASreforecast/{int(leadtime)}hours/cems-glofas-reforecast_{month}_{day}.zip'
+        zipRasterPath = f'{DataDir}/GloFASreforecast/{int(leadtime)}hours/GloFAS/cems-glofas-reforecast_{month}_{day}.zip'
         with zipfile.ZipFile(zipRasterPath, 'r') as zip_ref:
-            zip_ref.extractall(f'{DataDir}/GloFASreforecast/{int(leadtime)}hours/cems-glofas-reforecast_{month}_{day}')    
-        rasterPath = f'{DataDir}/GloFASreforecast/{int(leadtime)}hours/cems-glofas-reforecast_{month}_{day}/data.grib'
+            zip_ref.extractall(f'{DataDir}/GloFASreforecast/{int(leadtime)}hours/GloFAS/cems-glofas-reforecast_{month}_{day}')    
+        rasterPath = f'{DataDir}/GloFASreforecast/{int(leadtime)}hours/GloFAS/cems-glofas-reforecast_{month}_{day}/data.grib'
 
     elif isinstance (year, (str,int)):
         year = str(year)
-        zipRasterPath = f'{DataDir}/GloFASforecast/{int(leadtime)}hours/cems-glofas-forecast_{year}_{month}_{day}.zip'
+        zipRasterPath = f'{DataDir}/GloFASforecast/{int(leadtime)}hours/GloFAS/cems-glofas-forecast_{year}_{month}_{day}.zip'
         with zipfile.ZipFile(zipRasterPath, 'r') as zip_ref:
-            zip_ref.extractall(f'{DataDir}/GloFASforecast/{int(leadtime)}hours/cems-glofas-forecast_{year}_{month}_{day}/')    
-        rasterPath = f'{DataDir}/GloFASforecast/{int(leadtime)}hours/cems-glofas-forecast_{year}_{month}_{day}/data.grib'
+            zip_ref.extractall(f'{DataDir}/GloFASforecast/{int(leadtime)}hours/GloFAS/cems-glofas-forecast_{year}_{month}_{day}/')    
+        rasterPath = f'{DataDir}/GloFASforecast/{int(leadtime)}hours/GloFAS/cems-glofas-forecast_{year}_{month}_{day}/data.grib'
     else: 
-        ValueError (f"Argument year should be of type str or int")
+        ValueError (f"Argument year should be of type str or int, or be none")
     return rasterPath
 
 def openGloFAS(rasterPath, lakesPath=None, crs='EPSG:4326', forecastType='reforecast'):
-    '''Returns a DataArray with masked lakes for a single netcdf / grib file'''
-
+    '''Returns a DataArray with masked lakes for a single netcdf / grib file
+        please note how, when file is a grib file:
+            xarray requires both an install of the 
+                - cfgrib package 
+                - eccodes package (https://confluence.ecmwf.int/display/UDOC/How+to+install+ecCodes+with+Python+bindings+in+conda+-+ecCodes+FAQ)
+                - and they must be compatible with each other , as well as with xarray, so first :
+                    1.  pip install cfgrib eccodes (or upgrade)
+                    2.  pip install --upgrade xarray'''
+            
     if rasterPath.endswith('grib'):
         Q_ds = xr.load_dataset(rasterPath, engine='cfgrib')
     elif rasterPath.endswith('nc'):

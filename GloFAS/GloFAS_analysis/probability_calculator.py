@@ -11,18 +11,30 @@ from GloFAS.GloFAS_data_extractor.unzip_open import openGloFAS, unzipGloFAS
 import GloFAS.GloFAS_prep.configuration as cfg
 
 class FloodProbabilityProcessor:
-    def __init__(self, leadtime, adminLevel, forecastType, measure='max', start_date=None, end_date=None, nrCores=4, comparisonShape='polygon'):
+    def __init__(self, 
+                DataDir=cfg.DataDir, 
+                leadtime=168, 
+                area=cfg.MaliArea, 
+                lakesPath=cfg.lakesPath, 
+                crs=cfg.crs, 
+                adminLevel=None, 
+                forecastType='reforecast', 
+                measure='max', 
+                start_date=None, 
+                end_date=None, 
+                nrCores=4, 
+                comparisonShape='polygon'):
+                
         # start and end_date are only necessary if your forecastType is not 'reforecast' but 'forecast'
+        
         self.leadtime = leadtime
-        self.adminLevel = adminLevel
-        self.measure = measure
-        self.DataDir = cfg.DataDir
-        self.crs = cfg.crs
-        self.RPyr = cfg.RPyr
-        self.area = cfg.MaliArea
+        self.DataDir = DataDir
+        self.crs = crs
+        self.RPyr =RPyr
+        self.area =area
         self.lakesPath = cfg.lakesPath
         self.forecastType = forecastType
-        self.comparisonShape = comparisonShape
+        
         if forecastType == 'reforecast':
             self.MONTHSDAYS = get_monthsdays()
         elif forecastType ==  'forecast':
@@ -31,7 +43,15 @@ class FloodProbabilityProcessor:
         self.reference_rasterPath = unzipGloFAS(self.DataDir, self.leadtime, '01', '07')
         self.reference_Q_da = openGloFAS(self.reference_rasterPath, self.lakesPath, self.crs)
         self.threshold_da = openThreshold(self.DataDir, self.crs, self.RPyr, self.area, self.reference_Q_da)
-        self.threshold_gdf = aggregation(self.threshold_da, adminPath, 'polygon', measure=cfg.measure)
+
+        self.comparisonShape = comparisonShape
+        if comparisonShape == 'polygon':
+            self.measure = measure
+            self.threshold_gdf = aggregation(self.threshold_da, adminPath, 'polygon', measure=self.measure)
+            self.adminLevel = adminLevel
+
+        elif comparisonShape == 'point': 
+            self.threshold_gdf = aggregation(self.threshold_da, GloFAS_stations)
         self.nrCores = nrCores
         
     def exceedance(self, Q_da, threshold_gdf, nrEnsemble):
