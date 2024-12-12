@@ -18,7 +18,7 @@ lakesPath = DataDir / f'Visualization/waterbodies/waterbodies_merged.shp'
 stationsDir = DataDir / f'stations'
 DNHstations = stationsDir / f"Stations_DNH.csv"
 googlestations = stationsDir / 'coords_google_gauges_Mali.csv'
-GloFASstations = stationsDir / 'GloFAS_to_DNH_resembling_uparea_50km.csv'
+GloFASstations = stationsDir / 'GloFAS_to_DNH_resembling_uparea.csv'
 impact_csvPath = DataDir / "impact/MergedImpactData.csv"
 settlements_tif = DataDir / "GlobalHumanSettlement/GHS_BUILT_S_E2030_GLOBE_R2023A_54009_100_V1_0.tif"
 

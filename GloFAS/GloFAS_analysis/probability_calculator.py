@@ -19,12 +19,14 @@ class FloodProbabilityProcessor:
                 lakesPath=cfg.lakesPath, 
                 crs=cfg.crs, 
                 adminLevel=None, 
+                GloFAS_stations = cfg.GloFASstations,
                 forecastType='reforecast', 
                 measure='max', 
                 start_date=None, 
                 end_date=None, 
                 nrCores=4, 
-                comparisonShape='polygon'):
+                comparisonShape='polygon',
+                ):
                 
         # start and end_date are only necessary if your forecastType is not 'reforecast' but 'forecast'
         
@@ -49,33 +51,33 @@ class FloodProbabilityProcessor:
         self.comparisonShape = comparisonShape
         if comparisonShape == 'polygon':
             self.measure = measure
-            self.threshold_gdf = aggregation(self.threshold_da, adminPath, 'polygon', measure=self.measure)
+            self.threshold_gdf = aggregation(self.threshold_da, vector=adminPath, method='polygon', measure=self.measure)
             self.adminLevel = adminLevel
 
         elif comparisonShape == 'point': 
-            self.threshold_gdf = aggregation(self.threshold_da, GloFAS_stations) # aggregating the threshold value on the GloFAS station
+            self.threshold_gdf = aggregation(self.threshold_da, vector=GloFAS_stations, method='point') # aggregating the threshold value on the GloFAS station
         self.nrCores = nrCores
         
-    def exceedance(self, Q_da, threshold_gdf, nrEnsemble):
+    def exceedance(self, Q_da, threshold_gdf, nrEnsemble, timestamp):
         '''Check exceedance of threshold values for a single ensemble member
         threshold_gdf should be in same shape as eventual outcme, so if comparisonShape=polygon, threshold_gdf should be in polygon'''
         if self.comparisonShape=='polygon':
-            GloFAS_gdf = aggregation(Q_da, threshold_gdf, 'polygon', nrEnsemble, measure=self.measure)
+            GloFAS_gdf = aggregation(Q_da, threshold_gdf, 'polygon', nrEnsemble, measure=self.measure, timestamp=timestamp)
             exceedance = GloFAS_gdf[f'{self.measure}'] > threshold_gdf[f'{self.measure}']
         elif self.comparisonShape=='point': # assuming this then refers to aggregation to a point
-            GloFAS_gdf = aggregation (Q_da, threshold_gdf, 'point', nrEnsemble)
+            GloFAS_gdf = aggregation (Q_da, threshold_gdf, 'point', nrEnsemble=nrEnsemble, timestamp=timestamp)
             exceedance = GloFAS_gdf ['rastervalue'] > threshold_gdf['rastervalue']
         else: 
             raise ValueError (f"Not a valid shape : {self.comparisonShape}, pick between 'polygon' and 'point'")
         return exceedance
 
-    def probability(self, Q_da, threshold_gdf):
+    def probability(self, Q_da, threshold_gdf, timestamp):
         '''Calculate exceedance probability across ensemble members for a single time step'''
         nrMembers = len(Q_da.number)
         exceedance_count = np.zeros(len(threshold_gdf), dtype=int)
         
         # Calculate exceedances for each ensemble in parallel
-        results = Parallel(n_jobs=self.nrCores)(delayed(self.exceedance)(Q_da, threshold_gdf, ensemble) for ensemble in Q_da.number)
+        results = Parallel(n_jobs=self.nrCores)(delayed(self.exceedance)(Q_da, threshold_gdf, ensemble, timestamp) for ensemble in Q_da.number)
         for result in results:
             exceedance_count += result
         probability = exceedance_count / nrMembers
@@ -94,11 +96,11 @@ class FloodProbabilityProcessor:
                 print(f"Starting for {month}, {day}")
                 Q_da_rasterpath = unzipGloFAS (self.DataDir, self.leadtime, month, day)
                 Q_da = openGloFAS(Q_da_rasterpath, self.leadtime)  # Open data for the specific month/day
-                for timestamp in Q_da.time:  # Iterate over years
+                for timestamp in Q_da.time:  #Iterate over years
                     startLoop = datetime.now()
                     valid_timestamp = pd.to_datetime(str(timestamp.values)) + timedelta(hours=self.leadtime)
                     # Calculate probability
-                    flooded_df = self.probability(Q_da, self.threshold_gdf, self.nrCores)
+                    flooded_df = self.probability(Q_da, self.threshold_gdf, timestamp)
                     flooded_df['ValidTime'] = valid_timestamp  # Add timestamp
                     all_years_data.append(flooded_df)
                     print(f"Time step {valid_timestamp} done, took: {datetime.now() - startLoop}")
@@ -113,7 +115,7 @@ class FloodProbabilityProcessor:
                 Q_da = openGloFAS(Q_da_rasterpath, lakesPath=self.lakesPath, crs=self.crs)
                 valid_timestamp = pd.to_datetime(str(timestamp.values)) + timedelta(hours=self.leadtime)
                 # Calculate probability
-                flooded_df = self.probability(Q_da, self.threshold_gdf, self.nrCores)
+                flooded_df = self.probability(Q_da, self.threshold_gdf)
                 flooded_df['ValidTime'] = valid_timestamp  # Add timestamp
                 all_years_data.append(flooded_df)
                 print(f"Time step {valid_timestamp} done, took: {datetime.now() - startLoop}")
@@ -137,10 +139,11 @@ if __name__ == '__main__':
                                                 lakesPath=cfg.lakesPath,
                                                 crs=cfg.crs,
                                                 adminLevel=None,
+                                                GloFAS_stations=cfg.GloFASstations,
                                                 forecastType='reforecast',
                                                 measure=None,
                                                 start_date=None,
                                                 end_date=None,
                                                 nrCores=8,
                                                 comparisonShape='point')
-            prob.concatenate_prob(Q_da)
+            prob.concatenate_prob()
