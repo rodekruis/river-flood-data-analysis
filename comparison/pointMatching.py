@@ -75,10 +75,6 @@ def find_corresponding_point_within_box(station_lon, station_lat, ups_area_point
         latitude=slice(lat_max, lat_min),
         longitude=slice(lon_min, lon_max)
     )
-    
-
-
-
 
     # Extract the coordinates and values from the subset
     lats = subset["latitude"].values
@@ -87,14 +83,14 @@ def find_corresponding_point_within_box(station_lon, station_lat, ups_area_point
 
     area_difference = subset - ups_area_point_m
 
-    plt.figure(figsize=(8, 6))
-    area_difference.plot()
-    plt.title(f"Area difference for station, for longitude latitude selection")
-    plt.xlabel("Longitude")
-    plt.ylabel("Latitude")
-    plt.show()
-      # Save as file
-    plt.close() 
+    # plt.figure(figsize=(8, 6))
+    # area_difference.plot()
+    # plt.title(f"Area difference for station, for longitude latitude selection")
+    # plt.xlabel("Longitude")
+    # plt.ylabel("Latitude")
+    # plt.show()
+    #   # Save as file
+    # plt.close() 
     # Extract the coordinates and values from the subset
     lats = subset["latitude"].values
     lons = subset["longitude"].values
@@ -175,6 +171,7 @@ def find_corresponding_point_within_box(station_lon, station_lat, ups_area_point
     plt.ylabel("Latitude")
     plt.legend(loc="upper right", fontsize=10, frameon=True)
     plt.show()
+    plt.savefig(f'{cfg.DataDir}/GloFAS_station_for_DNH_{stationName}.png')
     plt.close()
     return model_point_lon, model_point_lat, best_area_diff
 
@@ -272,7 +269,7 @@ def attributePoints_to_Polygon(
         buffer_distance_meters=5000,  
         StationDataDir=Path.cwd(), 
         filename='attributePoints_to_Polygon.csv'
-    ):
+        ):
     # Format input data into GeoDataFrames
     points_gdf = checkVectorFormat(vectorPoint, 'point', crs)
     polygons_gdf = checkVectorFormat(vectorPolygon, 'polygon', crs)
