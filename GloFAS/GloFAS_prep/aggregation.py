@@ -93,7 +93,7 @@ def aggregation (rasterDA, vector, method, nrEnsemble=None, timestamp=None, meas
             rasterDA = rasterDA.sel(time=timestamp)
     # aggregation is about the model's location in relation to the model's output raster, therefore placement is in the model's framework
         # this argument is ignored when considering polygons, because on that level precision doesnt really matter
-    vectorGDF = checkVectorFormat(vector, shapeType=method, crs=rasterDA.rio.crs, placement='model')
+    vectorGDF = checkVectorFormat(vector, shapeType=method, crs=rasterDA.rio.crs, placement='real')
     if method == 'point': 
         pointgdf = query(rasterDA, vectorGDF)
         return pointgdf 

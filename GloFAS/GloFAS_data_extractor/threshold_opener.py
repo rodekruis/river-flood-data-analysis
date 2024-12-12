@@ -2,7 +2,7 @@ import xarray as xr
 import rioxarray as rio 
 
 def openThreshold(DataDir, crs, RPyr, area, Q_da_forecast ):
-    threshold_ds = xr.load_dataset(DataDir / f"flood_threshold_glofas_v4_rl_{RPyr:.1f}.nc")
+    threshold_ds = xr.load_dataset(DataDir / f"auxiliary/flood_threshold_glofas_v4_rl_{RPyr:.1f}.nc")
     threshold_ds.rio.write_crs(crs, inplace=True)
 
     threshold_da = threshold_ds[f"rl_{RPyr:.1f}"].sel(
