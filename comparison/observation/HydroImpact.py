@@ -59,9 +59,7 @@ def z_RP_station(HydroStations_RP_file, StationName, RP):
     z_RP = HydroStations_RP_df[HydroStations_RP_df['StationName'] == StationName][f'{RP}'].values
 
     return z_RP
-
-
-
+    
 def stampHydroTrigger(hydro_df, StationName, temporality_of_extremity, probability, distributionType): 
     """
     Adds a 'trigger' column to the hydro_df DataFrame indicating whether the 'Value' exceeds the QRP threshold.
