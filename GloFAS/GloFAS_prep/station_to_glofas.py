@@ -22,7 +22,7 @@ for i, row in stations_upsarea_df.iterrows():
     glofas_x, glofas_y, area_diff = find_corresponding_point_within_box(
         station_lon=row['Lon'],
         station_lat=row['Lat'],
-        ups_area_point_m=row['Catchment area (km2)'] * 1e6,  # Convert from km² to m²
+        ups_area_point_m=row['Catchment area (km2)']*1e6,  # Convert from km² to m²
         stationName=row['Station names'],
         glofas_ups_area_xr=glofas_ups_area_da,
         radius_m=10000

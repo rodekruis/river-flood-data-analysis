@@ -6,6 +6,7 @@ import scipy.stats as stats
 from comparison.pointMatching import attributePoints_to_Polygon
 import geopandas as gpd
 import numpy as np
+from pyextremes import EVA
 from scipy.stats import genextreme
 
 def parse_date_with_fallback(date_str, year):
@@ -59,54 +60,9 @@ def z_RP_station(HydroStations_RP_file, StationName, RP):
 
     return z_RP
 
-def QRP_fit (hydro_df, RP): 
-
-    # Extract the annual maximum discharge values
-    hydro_df['Year'] = hydro_df['Date'].dt.year
-    annual_max_discharge = hydro_df.groupby('Year')['Value'].max()
-
-    # Fit a Gumbel distribution to the annual maximum discharge values
-    loc, scale = stats.gumbel_r.fit(annual_max_discharge)
-    # Calculate the discharge value corresponding to the return period
-    discharge_value = stats.gumbel_r.ppf(1 - 1/RP, loc, scale)
-    return discharge_value
-
-def Q_GEV_fit(hydro_df, percentile): 
-    """
-    Fits a GEV distribution to the daily discharge values and calculates the discharge 
-    corresponding to a given percentile.
-
-    Parameters:
-        hydro_df (pd.DataFrame): A dataframe with at least 'Date' and 'Value' columns.
-            'Date' should be a datetime object and 'Value' is the discharge value.
-        percentile (float): Percentile for which to compute the discharge value (between 0 and 100).
-
-    Returns:
-        float: The discharge value corresponding to the given percentile.
-    """
-    # Ensure 'Date' column is a datetime object
-    hydro_df['Date'] = pd.to_datetime(hydro_df['Date'])
-
-    # Extract daily discharge values
-    daily_discharge = hydro_df['Value']
-    #  Remove non-finite values
-    daily_discharge_cleaned = daily_discharge[np.isfinite(daily_discharge)]
-
-    # Check if there are still issues
-    if daily_discharge_cleaned.empty:
-        raise ValueError("All data was non-finite after cleaning. Please check your dataset.")
-
-    # Fit a GEV distribution
-    shape, loc, scale = genextreme.fit(daily_discharge_cleaned)
 
 
-    # Calculate the discharge value corresponding to the specified percentile
-    discharge_value = genextreme.ppf(percentile / 100, shape, loc=loc, scale=scale)
-
-    return discharge_value
-
-
-def stampHydroTrigger(hydro_df, RP, StationName): 
+def stampHydroTrigger(hydro_df, StationName, temporality_of_extremity, probability, distributionType): 
     """
     Adds a 'trigger' column to the hydro_df DataFrame indicating whether the 'Value' exceeds the QRP threshold.
 
@@ -126,8 +82,8 @@ def stampHydroTrigger(hydro_df, RP, StationName):
     #QRP = QRP_station(HydroStations_RP_file, StationName, RP)
     Q_station = hydro_df["Value"] 
     
-    if RP < 21:
-        QRP= QRP_fit (hydro_df, RP)
+    if distributionType =='Gumbel':
+        QRP= QRP_fit (hydro_df, probability)
     else: # assuming above 20 is percentile, RP is percentile instead 
         print ('applying a GEV, assuming your RP is in percentiles')
         QRP = Q_GEV_fit (hydro_df, RP) 
@@ -206,7 +162,7 @@ def loop_over_stations(station_csv, DataDir, RP):
     RP = float(RP)
     station_df = pd.read_csv (station_csv, header=0)
     #print (station_df.columns)
-    hydrodir = rf"{DataDir}/DNHMali_2019\Q_stations"
+    hydrodir = rf"{DataDir}/DNHMali_2019/Q_stations"
     all_events = []
     for _, stationrow in station_df.iterrows(): 
         StationName = stationrow['StationName']
@@ -252,7 +208,7 @@ def events_per_adm (DataDir, admPath, adminLevel, station_csv, StationDataDir, a
 
 
 if __name__=="__main__": 
-
+    # running this script for the GloFAS 
     #print (readcsv(f"{DataDir}/Données partagées - DNH Mali - 2019/Donne╠ües partage╠ües - DNH Mali - 2019/De╠übit du Niger a╠Ç Ansongo.csv"))
     event_df = loop_over_stations (cfg.DNHstations, cfg.DataDir, 1)
     event_gdf = events_per_adm (cfg.DataDir, cfg.admPath, cfg.adminLevel, cfg.DNHstations, cfg.stationsDir, event_df, 'Observation', 1)

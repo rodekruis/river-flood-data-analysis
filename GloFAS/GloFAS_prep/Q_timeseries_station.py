@@ -13,6 +13,7 @@ from GloFAS.GloFAS_data_extractor.forecast_dataFetch import compute_dates_range
 from GloFAS.GloFAS_data_extractor.threshold_opener import openThreshold
 from GloFAS.GloFAS_data_extractor.unzip_open import openGloFAS, unzipGloFAS
 import GloFAS.GloFAS_prep.configuration as cfg
+
 class GloFAS_timeseries: 
     def __init__(self,
                 DataDir, 
@@ -99,8 +100,11 @@ class GloFAS_timeseries:
                 station_results_df = pd.DataFrame(station_results)
                 station_results_df.to_csv(f'{self.DataDir}/stations/timeseries/discharge_timeseries_{stationname}_{self.leadtime}.csv', index=False)
                 print(f"Finished station {stationname}")
+            
+                
 
 
+    
 if __name__ =='__main__': 
     for leadtime in cfg.leadtimes:
         timeseries = GloFAS_timeseries(DataDir=cfg.DataDir,
@@ -113,4 +117,4 @@ if __name__ =='__main__':
                                         end_date=None, 
                                         IDhead='Station names',
                                         percentile=(100-(cfg.triggerProb*100))) # percentile is 1 - the probability of exceedence. At 40 percent percentile, tehre is a 60 procent probability of this value being exceeded
-        timeseries.Q_over_time()
+        Q_timeseries.Q_over_time()
