@@ -14,9 +14,9 @@ impact_data_Mali_tidied.csv
 missing_cercle_info.csv
 missing_cercle_info_after_mod.csv
 impact_events_per_admin_54.csv
+impact_events_au_110.csv
 impact_events_per_admin_123.csv
-impact_events_per_admin_525.csv
-impact_events_per_admin_673.csv
+impact_events_au_525.csv
 
 # ignore experimentation notebooks
 extract.ipynb
