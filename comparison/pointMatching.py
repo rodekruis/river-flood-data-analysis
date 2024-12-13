@@ -170,8 +170,8 @@ def find_corresponding_point_within_box(station_lon, station_lat, ups_area_point
     plt.xlabel("Longitude")
     plt.ylabel("Latitude")
     plt.legend(loc="upper right", fontsize=10, frameon=True)
-    plt.show()
     plt.savefig(f'{cfg.DataDir}/GloFAS_station_for_DNH_{stationName}.png')
+    plt.show()
     plt.close()
     return model_point_lon, model_point_lat, best_area_diff
 
