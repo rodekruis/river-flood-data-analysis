@@ -23,7 +23,8 @@ impact_csvPath = DataDir / "impact/MergedImpactData.csv"
 settlements_tif = DataDir / "GlobalHumanSettlement/GHS_BUILT_S_E2030_GLOBE_R2023A_54009_100_V1_0.tif"
 
 crs = f'EPSG:4326' 
-RPsyr = [1.5, 2.0, 5.0, 10.0] # return period threshold in years 
+RPsyr = [1.5, 2.0, 5.0, 10.0] # return period threshold in years
+percentiles = [95, 98, 99] 
 leadtimes = [72, 96, 120,144, 168] # add also 24hours
 startYear = 2004 # could be 2004 but needs to be 2016 since there is no google data available before 
 endYear = 2023 # 00:00 1st of january of that year, so up to but not including
