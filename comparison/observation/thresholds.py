@@ -11,8 +11,8 @@ import numpy as np
 def calculate_max_discharge(hydro_df: pd.DataFrame, 
                             value_col: str = 'Value', 
                             timescale: str = 'Year', 
-                            incomplete_lastyear: (str,int) = 2023 # not considering the maximum of incomplete years, as these are not representative of the season
-                            ) -> pd.Series:
+                            incomplete_lastyear: (str,int) = 2023, # not considering the maximum of incomplete years, as these are not representative of the season
+                            date_col: str ='Date') -> pd.Series:
     """
     Calculates the maximum discharge values for a given timescale.
 
@@ -25,6 +25,7 @@ def calculate_max_discharge(hydro_df: pd.DataFrame,
         pd.Series: Maximum discharge values with the corresponding timescale as the index.
     """
     if not isinstance(hydro_df.index, pd.DatetimeIndex):
+        hydro_df [date_col] = hydro_df.index
         hydro_df.index = pd.to_datetime(hydro_df.index)
 
     hydro_df = hydro_df.copy()  
@@ -38,13 +39,14 @@ def calculate_max_discharge(hydro_df: pd.DataFrame,
         )
     if timescale == 'Year':
         hydro_df['Year'] = hydro_df.index.year
-        return hydro_df.groupby('Year')[value_col].max()
+
+        maximum =  hydro_df.groupby('Year')[value_col].max()
     elif timescale == 'Day':
         hydro_df['Date'] = hydro_df.index.date
-        return hydro_df.groupby('Date')[value_col].max()
+        maximum = hydro_df.groupby('Date')[value_col].max()
     else:
         raise ValueError("Invalid timescale. Use 'Year' or 'Day'.")
-
+    return maximum
 def csv_to_cleaned_series(csv: str) -> pd.Series:
     """
     Reads a CSV file and prepares a cleaned pandas Series for analysis.
