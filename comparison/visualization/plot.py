@@ -34,7 +34,7 @@ class Visualizer:
         titles = [
             'POD (Probability of Detection)', 'FAR (False Alarm Ratio)', 'CSI (Critical Success Index)',
             'POFD (Probability of False Detection)', 'Accuracy', 'Precision'
-        ]
+            ]
         metrics = ['pod', 'far', 'csi', 'pofd', 'accuracy', 'precision']
 
 
@@ -299,6 +299,84 @@ class Visualizer:
         filePath = f'{self.DataDir}/comparison/results/performance_metrics_all_admin_leadtime{standard_leadtime}.png'
         plt.savefig(filePath)
         plt.show()
+    def plot_flood_and_impact_events(
+        d_floods: Dict[str, pd.DataFrame], d_impacts: Dict[str, pd.DataFrame],
+        ds_reforecast: xr.Dataset,
+        admin_unit: str, start_time: str, end_time: str, threshold: float, action_lifetime: int = 10
+    ) -> None:
+        """ 
+        Timeseries met discharge van FloodHub (en GloFAS) met transparante
+        boxes(/lijnen bij 1-daagse events) voor events, plus ook return
+        periods als y. Geeft impressie van wat de modellen doen, wanneer ze
+        triggeren, alsook hoe ze (niet) matchen met impact
+        
+        :param d_floods: dictionary with flood events
+        :param d_impacts: dictionary with impact events
+        :param ds_reforecast: reforecast dataset
+        :param admin_unit: administrative unit
+        :param start_time: start time of the plot
+        :param end_time: end time of the plot
+        :param threshold: return period threshold
+        :param action_lifetime: margin of error/action lifetime for comparison of dates
+        """
+        df = get_plot_df_for_admin_unit(d_floods, d_impacts, admin_unit)
+        if df is None:
+            return
+
+        fig, ax = plt.subplots(figsize = (20, 6))
+        alpha = 0.5                 # transparency
+        red, blue = '#DB0A13', '#092448'
+        red = get_opacity_adjusted_hex(red, alpha)
+        blue = get_opacity_adjusted_hex(blue, alpha)
+        
+        start_time = pd.to_datetime(start_time)
+        end_time = pd.to_datetime(end_time)
+        
+        ds_subset = ds_reforecast.streamflow.sel(issue_time = slice(start_time, end_time))
+        ax.plot(ds_subset.actual_date, ds_subset.values, color = 'black', linewidth = 2)
+        thr_string = f'RP_{threshold}' if threshold not in [95, 98, 99] else f'pc_{threshold}th'
+        ax.axhline(y = ds_reforecast.attrs[thr_string], color = 'orange',
+                label = f'{threshold}-yr return period', linestyle = '--'
+        )
+        # analyse.add_return_periods(ax, ds_return_periods, [5], True)
+
+        # if event is of type impact, add margin of error to start and end
+        for idx, row in df.iterrows():
+                                    # subtract one day because of indexing error of the boxes
+            start = row['flood_start'] - pd.Timedelta(days = 1)
+            end = row['flood_end'] - pd.Timedelta(days = 1)
+                                    # add action lifetime to the flood events
+            if row['event_type'] == 'flood':
+                start = start - pd.Timedelta(days = action_lifetime)
+                end = end + pd.Timedelta(days = action_lifetime)
+                                    # inclusive duration
+            duration = (end - start).days + 1
+                                    # add rectangle to plot for each event
+            rect = patches.Rectangle(
+                                    # (x, y) position, starting from y = 0
+                (mdates.date2num(start), 0),
+                duration,           # width in days
+                ax.get_ylim()[1],   # height from y = 0 to max y (spans entire height)
+                facecolor = red if row['event_type'] == 'flood' else blue,
+                alpha = alpha
+                )
+            ax.add_patch(rect)
+        
+        ax.set_xlim(start_time, end_time)
+        ax.xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m-%d'))
+        fig.autofmt_xdate() 
+        ax.set_xlabel('time')
+        ax.set_ylabel(r'discharge ($\mathrm{m}^3/\mathrm{s}$)')
+
+        legend_handles = [
+            patches.Patch(color = blue, alpha = alpha, label = 'impact events'),
+            patches.Patch(color = red, alpha = alpha, label = 'forecasted events'),
+            plt.Line2D([0], [0], color = 'black', linewidth = 2, label = 'forecasted discharge')
+        ]
+        ax.legend(handles = legend_handles, loc = 'upper right')
+        
+        plt.tight_layout()
+    plt.show()
 
 if __name__ =='__main__': 
     vis = Visualizer(cfg.DataDir, cfg.admPath)

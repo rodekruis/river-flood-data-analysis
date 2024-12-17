@@ -42,11 +42,12 @@ def calculate_max_discharge(hydro_df: pd.DataFrame,
 
         maximum =  hydro_df.groupby('Year')[value_col].max()
     elif timescale == 'Day':
-        hydro_df['Date'] = hydro_df.index.date
-        maximum = hydro_df.groupby('Date')[value_col].max()
+        hydro_df['Day_Date'] = hydro_df.index.date
+        maximum = hydro_df.groupby('Day_Date')[value_col].max()
     else:
         raise ValueError("Invalid timescale. Use 'Year' or 'Day'.")
     return maximum
+    
 def csv_to_cleaned_series(csv: str) -> pd.Series:
     """
     Reads a CSV file and prepares a cleaned pandas Series for analysis.
@@ -158,7 +159,6 @@ def Q_GEV_fit_RP(hydro_df, value_col, RP):
     discharge_value = genextreme.ppf(1-1/RP, shape, loc=loc, scale=scale)
     return discharge_value
 
-    return discharge_value
 
 def Q_GEV_fit_RP_EVA(series: pd.Series, return_periods: list = [2, 5, 10, 25, 50, 100]) -> dict:
     """

@@ -16,7 +16,6 @@ def parse_date_with_fallback(date_str, year):
         date = pd.to_datetime(f"{year} {date_str}", format="%Y %d/%m %H:%M")
         return date
     except ValueError:
-
         # If the date is invalid (e.g., Feb 29 in non-leap years), return None
         #print(f"Invalid date skipped: {date_str} for year {year}")
         return None
@@ -24,10 +23,8 @@ def parse_date_with_fallback(date_str, year):
 def transform_hydro(csvPath): 
     
     hydro_df_wide = pd.read_csv(csvPath, header=0)
-
     # Melt the wide-format DataFrame to long format
     hydro_df_long = hydro_df_wide.melt(id_vars=["Date"], var_name="Year", value_name="Value")
-
     # Apply the parse_date_with_fallback function row by row to create valid datetime objects
     def create_datetime(row):
         return parse_date_with_fallback(row['Date'], row['Year'])
@@ -263,12 +260,12 @@ if __name__=="__main__":
     value_col = 'percentile_40.0' # we're interested in 60% probability of being exceeded amongst the ensemble members 
     all_events = []
     for leadtime in cfg.leadtimes:
-        for RP in cfg.RPsyr: 
-            loop_over_stations_obs (cfg.DNHstations, cfg.DataDir, 'RP', RP, value_col='Value')
+        #for RP in cfg.RPsyr: 
+            #loop_over_stations_obs (cfg.DNHstations, cfg.DataDir, 'RP', RP, value_col='Value')
             #loop_over_stations_pred(cfg.DNHstations, cfg.stationsDir, RP, 'RP', value_col, leadtime)
         for percentile in cfg.percentiles:
             loop_over_stations_obs (cfg.DNHstations, cfg.DataDir, 'percentile', percentile, value_col='Value')
-            #loop_over_stations_pred(cfg.DNHstations, cfg.stationsDir, percentile, 'percentile', value_col, leadtime)
+            #loop_over_stations_pred (cfg.DNHstations, cfg.stationsDir, percentile, 'percentile', value_col, leadtime)
 
     # # running this script for the GloFAS 
     # #print (readcsv(f"{DataDir}/Données partagées - DNH Mali - 2019/Donne╠ües partage╠ües - DNH Mali - 2019/De╠übit du Niger a╠Ç Ansongo.csv"))

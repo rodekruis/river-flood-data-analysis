@@ -81,7 +81,53 @@ def collect_performance_measures(admin_unit, DataDir, leadtimes, return_periods)
                         data['FAR'][model][comparison_type][i, j] = far_value
     
     return data
+def prepare_plot_df(d_events: Dict[str, pd.DataFrame], e_type: str) -> pd.DataFrame:
+    """
+    Combines events from dictionary of events (i.e. flood or impact events)
+    to a DataFrame, with, as addition (and opposed to prior functions), an
+    extra column with 'event_type' to distinguish between flood and impact,
+    which is handy for plotting
 
+    :param d_events: dictionary with events
+    :param e_type: type of events (flood or impact)
+    :return: dataframe with all events
+    """
+    events = []
+    for au, df in d_events.items():
+        df = df.copy()
+        df['admin_unit'] = au
+        df['event_type'] = e_type
+        events.append(df)
+                        # combine, ensure datetime columns, return
+    df = pd.concat(events, ignore_index = True)
+    df['flood_start'] = pd.to_datetime(df['flood_start'])
+    df['flood_end'] = pd.to_datetime(df['flood_end'])
+    return df
+
+def get_plot_df_for_admin_unit(
+        d_floods: Dict[str, pd.DataFrame], d_impacts: Dict[str, pd.DataFrame], admin_unit: str
+    ) -> pd.DataFrame:
+    """ 
+    Takes the dictionary of events and the dictionary of flood events,
+    combines them to a DataFrame with prepare_plot_df(), and subsets
+    for admin unit, giving a DataFrame with all events for that admin unit
+
+    :param d_floods: dictionary with events
+    :param d_impacts: dictionary with flood events
+    :param admin_unit: administrative unit
+    :return: dataframe with all events for admin unit
+    """
+    if not admin_unit in d_floods.keys() or not admin_unit in d_impacts.keys():
+        print(f'Cannot continue with plot, {admin_unit} not in events')
+        return None
+    
+    df_floods = prepare_plot_df(d_floods, 'flood')
+    df_impacts = prepare_plot_df(d_impacts, 'impact')
+    df_all_events = pd.concat([df_floods, df_impacts],
+                               ignore_index = True).sort_values(['admin_unit', 'flood_start'])
+    df_all_events = df_all_events[df_all_events['admin_unit'] == admin_unit]
+
+    return df_all_events
 
 if __name__ =='__main__': 
     # These regions include Bamako, Koulikoro, Ségou, Mopti, Timbouctou and Gao, which have historically experienced frequent and severe flood events. 
