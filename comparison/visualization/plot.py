@@ -1,9 +1,12 @@
 import cmcrameri.cm as cmc #change colormaps
+import pandas as pd
 from GloFAS.GloFAS_prep.vectorCheck import checkVectorFormat
+from GloFAS.GloFAS_prep.text_formatter import capitalize
 import matplotlib.pyplot as plt
 from comparison.collect_for_administrative_unit import collect_performance_measures
 import GloFAS.GloFAS_prep.configuration as cfg
-
+from comparison.observation.HydroImpact import transform_hydro
+from comparison.observation.thresholds import Q_Gumbel_fit_RP
 class Visualizer: 
     def __init__(self, DataDir, vector_adminMap):
         self.models = ['GloFAS', 'GoogleFloodHub', 'PTM'] # is PTM best way to refer to the current trigger model in the EAP? 
@@ -299,87 +302,93 @@ class Visualizer:
         filePath = f'{self.DataDir}/comparison/results/performance_metrics_all_admin_leadtime{standard_leadtime}.png'
         plt.savefig(filePath)
         plt.show()
-    def plot_flood_and_impact_events(
-        d_floods: Dict[str, pd.DataFrame], d_impacts: Dict[str, pd.DataFrame],
-        ds_reforecast: xr.Dataset,
-        admin_unit: str, start_time: str, end_time: str, threshold: float, action_lifetime: int = 10
-    ) -> None:
-        """ 
-        Timeseries met discharge van FloodHub (en GloFAS) met transparante
-        boxes(/lijnen bij 1-daagse events) voor events, plus ook return
-        periods als y. Geeft impressie van wat de modellen doen, wanneer ze
-        triggeren, alsook hoe ze (niet) matchen met impact
-        
-        :param d_floods: dictionary with flood events
-        :param d_impacts: dictionary with impact events
-        :param ds_reforecast: reforecast dataset
-        :param admin_unit: administrative unit
-        :param start_time: start time of the plot
-        :param end_time: end time of the plot
-        :param threshold: return period threshold
-        :param action_lifetime: margin of error/action lifetime for comparison of dates
+
+    def plot_flood_and_impact_events(self, df_glofas, df_impact, df_obs, stationname, admin_unit, leadtime, return_period, start_time, end_time, threshold_glofas, threshold_obs ):
         """
-        df = get_plot_df_for_admin_unit(d_floods, d_impacts, admin_unit)
-        if df is None:
-            return
+        Plots observed discharge, predicted discharge, and flood impact events for a given administrative unit.
+        
+        Parameters:
+        - df_glofas (pd.DataFrame): Predicted discharge with 'Date' as index and 'Value' as discharge.
+        - df_impact (pd.DataFrame): Impact events with columns 'admin_unit', 'Start Date', and 'End Date'.
+        - df_obs (pd.DataFrame): Observed discharge with 'Date' as index and 'Value' as discharge.
+        - admin_unit (str): Administrative unit to filter impact events.
+        - start_time (str): Start time for the plot (format 'YYYY-MM-DD').
+        - end_time (str): End time for the plot (format 'YYYY-MM-DD').
+        - threshold (float): Discharge threshold (e.g., 5-year return period).
+        """
+        # Filter impact events for the specific admin unit
+        df_impact_bamako_events = df_impact[df_impact['ADM2'] == capitalize(admin_unit)]
+        print (df_impact_bamako_events.head)
+        # Convert start and end times to datetime for filtering
+        start_time = pd.to_datetime(start_time, format="%Y-%m-%d")
+        end_time = pd.to_datetime(end_time, format="%Y-%m-%d")
+        # Filter observed and predicted discharge for the time range
+        df_obs = df_obs.loc[(df_obs.index >= start_time) & (df_obs.index <= end_time)]
+        df_glofas = df_glofas.loc[(df_glofas.index >= start_time) & (df_glofas.index <= end_time)]
+        
+        # Plot the data
+        plt.figure(figsize=(12, 6))
 
-        fig, ax = plt.subplots(figsize = (20, 6))
-        alpha = 0.5                 # transparency
-        red, blue = '#DB0A13', '#092448'
-        red = get_opacity_adjusted_hex(red, alpha)
-        blue = get_opacity_adjusted_hex(blue, alpha)
-        
-        start_time = pd.to_datetime(start_time)
-        end_time = pd.to_datetime(end_time)
-        
-        ds_subset = ds_reforecast.streamflow.sel(issue_time = slice(start_time, end_time))
-        ax.plot(ds_subset.actual_date, ds_subset.values, color = 'black', linewidth = 2)
-        thr_string = f'RP_{threshold}' if threshold not in [95, 98, 99] else f'pc_{threshold}th'
-        ax.axhline(y = ds_reforecast.attrs[thr_string], color = 'orange',
-                label = f'{threshold}-yr return period', linestyle = '--'
-        )
-        # analyse.add_return_periods(ax, ds_return_periods, [5], True)
+        # Plot observed discharge
+        plt.plot(df_obs.index, df_obs['Value'], label='Observed Discharge', color='blue', linewidth=1)
 
-        # if event is of type impact, add margin of error to start and end
-        for idx, row in df.iterrows():
-                                    # subtract one day because of indexing error of the boxes
-            start = row['flood_start'] - pd.Timedelta(days = 1)
-            end = row['flood_end'] - pd.Timedelta(days = 1)
-                                    # add action lifetime to the flood events
-            if row['event_type'] == 'flood':
-                start = start - pd.Timedelta(days = action_lifetime)
-                end = end + pd.Timedelta(days = action_lifetime)
-                                    # inclusive duration
-            duration = (end - start).days + 1
-                                    # add rectangle to plot for each event
-            rect = patches.Rectangle(
-                                    # (x, y) position, starting from y = 0
-                (mdates.date2num(start), 0),
-                duration,           # width in days
-                ax.get_ylim()[1],   # height from y = 0 to max y (spans entire height)
-                facecolor = red if row['event_type'] == 'flood' else blue,
-                alpha = alpha
-                )
-            ax.add_patch(rect)
-        
-        ax.set_xlim(start_time, end_time)
-        ax.xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m-%d'))
-        fig.autofmt_xdate() 
-        ax.set_xlabel('time')
-        ax.set_ylabel(r'discharge ($\mathrm{m}^3/\mathrm{s}$)')
+        # Plot predicted discharge
+        plt.plot(df_glofas.index, df_glofas['percentile_40.0'], label=f'Predicted discharge by GloFAS with leadtime of {leadtime} hours', color='green', linestyle='-', linewidth=1)
+        plt.axhline(threshold_obs, color='blue', linestyle=':', linewidth=2, label=f'{return_period}-year Return Period of observational data')
+        plt.axhline(threshold_glofas, color='green', linestyle=':', linewidth=2, label=f'{return_period}-year Return Period of GloFAS data ')
 
-        legend_handles = [
-            patches.Patch(color = blue, alpha = alpha, label = 'impact events'),
-            patches.Patch(color = red, alpha = alpha, label = 'forecasted events'),
-            plt.Line2D([0], [0], color = 'black', linewidth = 2, label = 'forecasted discharge')
-        ]
-        ax.legend(handles = legend_handles, loc = 'upper right')
-        
+
+        # Add impact events as translucent red blocks with a single legend entry
+        legend_shown = False
+        for _, row in df_impact_bamako_events.iterrows():
+            start = pd.to_datetime(row['Start Date'])
+            end = pd.to_datetime(row['End Date'])
+            if start >= start_time and end <= end_time:  # Only include events within the specified time range
+                label = 'Impact Event' if not legend_shown else ""
+                plt.axvspan(start, end, color='red', alpha=0.3, label=label)
+                legend_shown = True
+        # Add horizontal line for threshold (e.g., 5-year return period)
+
+        # Customize plot
+        plt.title(f'Discharge at station {stationname} and impact events in {admin_unit}')
+        plt.xlabel('Date')
+        plt.ylabel('Discharge (m³/s)')
+        plt.legend(loc='lower left')
+        #plt.grid(True)
         plt.tight_layout()
-    plt.show()
-
+        
+        # Show plot
+        plt.show()
 if __name__ =='__main__': 
+    BasinName = 'Niger'
+    StationName = 'Bamako'
+    CorrespondingAdminUnit = 'Bamako'
+    
+    leadtime = 168
+    return_period = 2 # year 
+    df_obs = transform_hydro(f"{cfg.DataDir}/DNHMali_2019/Q_stations/{BasinName}_{StationName}.csv",cfg.startYear, cfg.endYear)
+    df_glofas = pd.read_csv (f"{cfg.stationsDir}/GloFAS_Q/timeseries/discharge_timeseries_{StationName}_{leadtime}.csv",
+                                )
+    df_glofas['ValidTime'] = pd.to_datetime(df_glofas["ValidTime"], format="%Y-%m-%d")
+    # Check for any invalid dates
+    if df_glofas['ValidTime'].isnull().any():
+        print("Warning: Some dates in 'date_col' could not be parsed and are set to NaT.")
+    # Set the index to the datetime column
+    df_glofas.set_index('ValidTime', inplace=True)
+    df_glofas.sort_index(inplace=True)
+    df_impact = pd.read_csv (cfg.impact_csvPath, delimiter=';', header=0)
+    RP_glofas = Q_Gumbel_fit_RP(df_glofas, return_period, 'percentile_40.0')
+    RP_obs = Q_Gumbel_fit_RP (df_obs, return_period, 'Value')
     vis = Visualizer(cfg.DataDir, cfg.admPath)
+    vis.plot_flood_and_impact_events(df_glofas, 
+                                        df_impact, 
+                                        df_obs, 
+                                        StationName,
+                                        CorrespondingAdminUnit, 
+                                        leadtime,
+                                        return_period,
+                                        '2004-07-01', 
+                                        '2019-01-01', RP_glofas, RP_obs)
     # comparisonTypes = ['Observation', 'Impact']
     # models = ['GloFAS', 'PTM']
     # for model in models: 
@@ -394,11 +403,11 @@ if __name__ =='__main__':
     #                     print (f'No path for leadtime: {leadtime}, RP: {RPyr}, {comparisonType}, for model: {model}') 
     #                     continue
     # admin_units = [ 'KOULIKORO']
-    admin_units = ['BLA', 'SAN','KIDAL', 'TOMINIAN', 'KANGABA', 'KOULIKORO', 'KOLONDIEBA', 'MOPTI', 'BAMAKO', 'SIKASSO', 'SEGOU', 'KATI']
-    for leadtime in cfg.leadtimes:
-        vis.performance_over_return_period_all (admin_units, leadtime)
-    for RPyr in cfg.RPsyr:
-        vis.performance_over_leadtime_all (admin_units, standard_RP=RPyr)
+    # admin_units = ['BLA', 'SAN','KIDAL', 'TOMINIAN', 'KANGABA', 'KOULIKORO', 'KOLONDIEBA', 'MOPTI', 'BAMAKO', 'SIKASSO', 'SEGOU', 'KATI']
+    # for leadtime in cfg.leadtimes:
+    #     vis.performance_over_return_period_all (admin_units, leadtime)
+    # for RPyr in cfg.RPsyr:
+    #     vis.performance_over_leadtime_all (admin_units, standard_RP=RPyr)
     # for admin_unit in admin_units:
     #     data = collect_performance_measures(admin_unit, cfg.DataDir, cfg.leadtimes, cfg.RPsyr)
     #     for leadtime in cfg.leadtimes: 

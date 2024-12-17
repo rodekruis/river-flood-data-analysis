@@ -20,24 +20,48 @@ def parse_date_with_fallback(date_str, year):
         #print(f"Invalid date skipped: {date_str} for year {year}")
         return None
         
-def transform_hydro(csvPath): 
-    
+
+def transform_hydro(csvPath, startYear, endYear): 
     hydro_df_wide = pd.read_csv(csvPath, header=0)
+    
     # Melt the wide-format DataFrame to long format
     hydro_df_long = hydro_df_wide.melt(id_vars=["Date"], var_name="Year", value_name="Value")
-    # Apply the parse_date_with_fallback function row by row to create valid datetime objects
+    
+    # Function to create valid datetime objects
     def create_datetime(row):
         return parse_date_with_fallback(row['Date'], row['Year'])
-
+    
+    # Apply the datetime creation function row by row
     hydro_df_long['ParsedDate'] = hydro_df_long.apply(create_datetime, axis=1)
+    
     # Drop rows where ParsedDate is None (invalid dates)
     hydro_df_long = hydro_df_long.dropna(subset=["ParsedDate"])
+    
     # Drop the now redundant 'Year' and 'Date' columns if not needed
     hydro_df_long = hydro_df_long.drop(columns=["Year", "Date"])
+    
     # Rename ParsedDate back to Date
     hydro_df_long.rename(columns={"ParsedDate": "Date"}, inplace=True)
+    
+    # Check if the 'Date' column exists and convert it to datetime
+    if "Date" in hydro_df_long.columns:
+        hydro_df_long["Date"] = pd.to_datetime(hydro_df_long["Date"], format="%Y-%m-%d %H:%M", errors='coerce')
+
+        # Check for any invalid dates
+        if hydro_df_long["Date"].isnull().any():
+            print("Warning: Some dates in 'Date' could not be parsed and are set to NaT.")
+        
+        # Set the index to the datetime column
+        hydro_df_long.set_index("Date", inplace=True)
+        
+        # Filter data for the given start and end year
+        hydro_df_long = hydro_df_long[(hydro_df_long.index.year >= startYear) & (hydro_df_long.index.year <= endYear)]
+    else:
+        print(f"Error: Column 'Date' does not exist in the DataFrame, hopefully the date is the index")
+    
     # Display the reshaped DataFrame
     return hydro_df_long
+
     
 def stampHydroTrigger(hydro_df, StationName, type_of_extremity, probability, value_col='Value', date_col='Date'): 
     """
