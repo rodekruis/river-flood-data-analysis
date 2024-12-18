@@ -3,7 +3,7 @@ import pandas as pd
 from GloFAS.GloFAS_prep.vectorCheck import checkVectorFormat
 from GloFAS.GloFAS_prep.text_formatter import capitalize
 import matplotlib.pyplot as plt
-from comparison.collect_for_administrative_unit import collect_performance_measures
+from comparison.collect_for_administrative_unit import collect_performance_measures_over_admin, collect_performance_measures_over_station
 import GloFAS.GloFAS_prep.configuration as cfg
 from comparison.observation.HydroImpact import transform_hydro
 from comparison.observation.thresholds import Q_Gumbel_fit_RP
@@ -232,7 +232,7 @@ class Visualizer:
     def performance_over_return_period_all(self, admin_units, standard_leadtime=168): 
         data_all_admin = []
         for admin_unit in admin_units:
-            data = collect_performance_measures(admin_unit, self.DataDir, cfg.leadtimes, cfg.RPsyr)
+            data = collect_performance_measures_over_station(admin_unit, self.DataDir, cfg.leadtimes, cfg.RPsyr, cfg.percentiles)
             data_all_admin.append((admin_unit, data))
 
         fig, axs = plt.subplots(2, 1, figsize=(10, 7))
@@ -360,37 +360,38 @@ class Visualizer:
         # Show plot
         plt.show()
 if __name__ =='__main__': 
-    BasinName = 'Niger'
-    StationName = 'Bamako'
-    CorrespondingAdminUnit = 'Bamako'
-    
-    leadtime = 168
-    return_period = 2 # year 
-    df_obs = transform_hydro(f"{cfg.DataDir}/DNHMali_2019/Q_stations/{BasinName}_{StationName}.csv",cfg.startYear, cfg.endYear)
-    df_glofas = pd.read_csv (f"{cfg.stationsDir}/GloFAS_Q/timeseries/discharge_timeseries_{StationName}_{leadtime}.csv",
-                                )
-    df_glofas['ValidTime'] = pd.to_datetime(df_glofas["ValidTime"], format="%Y-%m-%d")
-    # Check for any invalid dates
-    if df_glofas['ValidTime'].isnull().any():
-        print("Warning: Some dates in 'date_col' could not be parsed and are set to NaT.")
-    # Set the index to the datetime column
-    df_glofas.set_index('ValidTime', inplace=True)
-    df_glofas.sort_index(inplace=True)
-    df_impact = pd.read_csv (cfg.impact_csvPath, delimiter=';', header=0)
-    RP_glofas = Q_Gumbel_fit_RP(df_glofas, return_period, 'percentile_40.0')
-    RP_obs = Q_Gumbel_fit_RP (df_obs, return_period, 'Value')
     vis = Visualizer(cfg.DataDir, cfg.admPath)
-    vis.plot_flood_and_impact_events(df_glofas, 
-                                        df_impact, 
-                                        df_obs, 
-                                        StationName,
-                                        CorrespondingAdminUnit, 
-                                        leadtime,
-                                        return_period,
-                                        '2004-07-01', 
-                                        '2019-01-01', RP_glofas, RP_obs)
-    # comparisonTypes = ['Observation', 'Impact']
-    # models = ['GloFAS', 'PTM']
+    # BasinName = 'Niger'
+    # StationName = 'Bamako'
+    # CorrespondingAdminUnit = 'Bamako'
+    
+    # leadtime = 168
+    # return_period = 2 # year 
+    # df_obs = transform_hydro(f"{cfg.DataDir}/DNHMali_2019/Q_stations/{BasinName}_{StationName}.csv",cfg.startYear, cfg.endYear)
+    # df_glofas = pd.read_csv (f"{cfg.stationsDir}/GloFAS_Q/timeseries/discharge_timeseries_{StationName}_{leadtime}.csv",
+    #                             )
+    # df_glofas['ValidTime'] = pd.to_datetime(df_glofas["ValidTime"], format="%Y-%m-%d")
+    # # Check for any invalid dates
+    # if df_glofas['ValidTime'].isnull().any():
+    #     print("Warning: Some dates in 'date_col' could not be parsed and are set to NaT.")
+    # # Set the index to the datetime column
+    # df_glofas.set_index('ValidTime', inplace=True)
+    # df_glofas.sort_index(inplace=True)
+    # df_impact = pd.read_csv (cfg.impact_csvPath, delimiter=';', header=0)
+    # RP_glofas = Q_Gumbel_fit_RP(df_glofas, return_period, 'percentile_40.0')
+    # RP_obs = Q_Gumbel_fit_RP (df_obs, return_period, 'Value')
+    # 
+    # vis.plot_flood_and_impact_events(df_glofas, 
+    #                                     df_impact, 
+    #                                     df_obs, 
+    #                                     StationName,
+    #                                     CorrespondingAdminUnit, 
+    #                                     leadtime,
+    #                                     return_period,
+    #                                     '2004-07-01', 
+    #                                     '2019-01-01', RP_glofas, RP_obs)
+    comparisonTypes = ['Observation']
+    models = ['GloFAS', 'PTM']
     # for model in models: 
     #     for comparisonType in comparisonTypes:
     #         for leadtime in cfg.leadtimes: 
@@ -402,17 +403,17 @@ if __name__ =='__main__':
     #                 except:
     #                     print (f'No path for leadtime: {leadtime}, RP: {RPyr}, {comparisonType}, for model: {model}') 
     #                     continue
-    # admin_units = [ 'KOULIKORO']
-    # admin_units = ['BLA', 'SAN','KIDAL', 'TOMINIAN', 'KANGABA', 'KOULIKORO', 'KOLONDIEBA', 'MOPTI', 'BAMAKO', 'SIKASSO', 'SEGOU', 'KATI']
-    # for leadtime in cfg.leadtimes:
-    #     vis.performance_over_return_period_all (admin_units, leadtime)
-    # for RPyr in cfg.RPsyr:
-    #     vis.performance_over_leadtime_all (admin_units, standard_RP=RPyr)
-    # for admin_unit in admin_units:
-    #     data = collect_performance_measures(admin_unit, cfg.DataDir, cfg.leadtimes, cfg.RPsyr)
-    #     for leadtime in cfg.leadtimes: 
-    #         for RPyr in cfg.RPsyr:
-    #             vis.performance_over_param(admin_unit, data, standard_RP=RPyr, standard_leadtime=leadtime)
+    admin_units = [ 'BAMAKO']
+    #admin_units = [''][#['BLA', 'SAN','KIDAL', 'TOMINIAN', 'KANGABA', 'KOULIKORO', 'KOLONDIEBA', 'MOPTI', 'BAMAKO', 'SIKASSO', 'SEGOU', 'KATI']
+    for leadtime in cfg.leadtimes:
+        vis.performance_over_return_period_all (admin_units, leadtime)
+    for RPyr in cfg.RPsyr:
+        vis.performance_over_leadtime_all (admin_units, standard_RP=RPyr)
+    for admin_unit in admin_units:
+        data = collect_performance_measures(admin_unit, cfg.DataDir, cfg.leadtimes, cfg.RPsyr)
+        for leadtime in cfg.leadtimes: 
+            for RPyr in cfg.RPsyr:
+                vis.performance_over_param(admin_unit, data, standard_RP=RPyr, standard_leadtime=leadtime)
             
 
 # to do : 

@@ -21,7 +21,7 @@ def parse_date_with_fallback(date_str, year):
         return None
         
 
-def transform_hydro(csvPath, startYear, endYear): 
+def transform_hydro(csvPath, startYear=2004, endYear=2018): 
     hydro_df_wide = pd.read_csv(csvPath, header=0)
     
     # Melt the wide-format DataFrame to long format
@@ -57,7 +57,7 @@ def transform_hydro(csvPath, startYear, endYear):
         # Filter data for the given start and end year
         hydro_df_long = hydro_df_long[(hydro_df_long.index.year >= startYear) & (hydro_df_long.index.year <= endYear)]
     else:
-        print(f"Error: Column 'Date' does not exist in the DataFrame, hopefully the date is the index")
+        print(f"Warning: Column 'Date' does not exist in the DataFrame, hopefully the date is the index")
     
     # Display the reshaped DataFrame
     return hydro_df_long
@@ -100,15 +100,13 @@ def stampHydroTrigger(hydro_df, StationName, type_of_extremity, probability, val
     if type_of_extremity == 'RP':
         Q_prob= Q_Gumbel_fit_RP (hydro_df, probability, value_col=value_col) # results in infinite
     elif type_of_extremity == 'percentile': # assuming above 20 is percentile, RP is percentile instead 
-        Q_prob = Q_Gumbel_fit_percentile (hydro_df, percentile, value_col) 
+        Q_prob = Q_Gumbel_fit_percentile (hydro_df, probability, value_col) 
     else: 
         print ('no such type of extremity')
     #print (f"for {StationName} : return period Q= {QRP}")
     if not isinstance(Q_prob, (int, float)):
         raise ValueError(f"Expected QRP to be a scalar (int or float), but got {type(Q_prob)}.")
     # Calculate the QRP threshold
-    
-
     # Copy the DataFrame and add the 'trigger' column
     hydro_trigger_df = hydro_df.copy()
     hydro_trigger_df['Trigger'] = (hydro_trigger_df[value_col] > Q_prob).astype(int)
@@ -124,8 +122,6 @@ def createEvent(trigger_df, date_col='Date'):
             trigger_df = trigger_df.sort_index()
         except: 
             raise ValueError (f'{date_col} not in trigger_df index and no set index either')
-
-        
 
     # Prepare commune info with geometry for event creation
     event_data = []
@@ -207,7 +203,7 @@ def loop_over_stations_obs(station_csv, DataDir, type_of_extremity, probability,
             print (f'calculating {StationName}, in {BasinName}')
             hydro_df = transform_hydro (stationPath) # this actually looks good
         except: 
-            # print (f'no discharge measures found for station {StationName} in {BasinName}')
+            print (f'no discharge measures found for station {StationName} in {BasinName}')
             continue
 
         trigger_df = stampHydroTrigger (hydro_df, StationName, type_of_extremity, probability, value_col)
@@ -289,7 +285,7 @@ if __name__=="__main__":
             #loop_over_stations_pred(cfg.DNHstations, cfg.stationsDir, RP, 'RP', value_col, leadtime)
         for percentile in cfg.percentiles:
             loop_over_stations_obs (cfg.DNHstations, cfg.DataDir, 'percentile', percentile, value_col='Value')
-            #loop_over_stations_pred (cfg.DNHstations, cfg.stationsDir, percentile, 'percentile', value_col, leadtime)
+            loop_over_stations_pred (cfg.DNHstations, cfg.stationsDir, percentile, 'percentile', value_col, leadtime)
 
     # # running this script for the GloFAS 
     # #print (readcsv(f"{DataDir}/Données partagées - DNH Mali - 2019/Donne╠ües partage╠ües - DNH Mali - 2019/De╠übit du Niger a╠Ç Ansongo.csv"))
