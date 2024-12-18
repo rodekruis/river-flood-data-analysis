@@ -19,7 +19,7 @@ class Visualizer:
             ]#['tab:blue', 'tab:orange', 'tab:green', 'tab:red', 'tab:purple', 'tab:brown', 'tab:pink', 'tab:gray', 'tab:olive', 'tab:cyan', ] # adjust pls if you want 
         self.linestyles = ['-', '--','-.' ]
         self.markerstyles =['o','v', 's']
-        self.comparisonTypes = ['Observation', 'Impact']
+        self.comparisonTypes = ['Observation']#, 'Impact']
         self.DataDir=DataDir
         self.gdf_shape=checkVectorFormat(vector_adminMap, shapeType='polygon')
         self.cmap_r = 'RdYlBu_r' # 'cmc.batlow_r'  # Reversed for FAR
@@ -229,7 +229,7 @@ class Visualizer:
         plt.savefig(filePath)
         plt.show()
 
-    def performance_over_return_period_all(self, admin_units, standard_leadtime=168): 
+    def performance_over_return_period_all(self, admin_units, standard_leadtime=168, thresholdtype='return_periods'): 
         data_all_admin = []
         for admin_unit in admin_units:
             data = collect_performance_measures_over_station(admin_unit, self.DataDir, cfg.leadtimes, cfg.RPsyr, cfg.percentiles)
@@ -249,13 +249,13 @@ class Visualizer:
             for model, marker in zip(self.models, self.markerstyles):
                 for comparison_type, linestyle in zip(self.comparisonTypes, self.linestyles):
                     ax.plot(return_periods, 
-                            data_all_admin[admin_units.index(admin_unit)][1]['POD'][model][comparison_type][:, lt_idx], 
+                            data_all_admin[admin_units.index(admin_unit)][1]['POD'][model][comparison_type][thresholdtype][:, lt_idx], 
                             color=color, 
                             linestyle=linestyle, 
                             marker=marker,
                             markersize=self.markersize)
         
-        ax.set_xlabel('Return Period (years)')
+        ax.set_xlabel(f'{thresholdtype}')
         ax.set_ylabel('POD')
         ax.set_xlim(RP_x_lim)
         ax.set_ylim([-0.05, 1.05])
@@ -269,7 +269,7 @@ class Visualizer:
             for model, marker in zip(self.models, self.markerstyles):
                 for comparison_type, linestyle in zip(self.comparisonTypes, self.linestyles):
                     ax.plot(return_periods, 
-                            data_all_admin[admin_units.index(admin_unit)][1]['FAR'][model][comparison_type][:, lt_idx], 
+                            data_all_admin[admin_units.index(admin_unit)][1]['FAR'][model][comparison_type][thresholdtype][:, lt_idx], 
                             color=color, 
                             linestyle=linestyle, 
                             marker=marker,
@@ -285,7 +285,7 @@ class Visualizer:
         from matplotlib.lines import Line2D
         custom_lines = [
             Line2D([0], [0], color='black', linestyle=self.linestyles[0], label='Observation'),
-            Line2D([0], [0], color='black', linestyle=self.linestyles[1], label='Impact'),
+            #Line2D([0], [0], color='black', linestyle=self.linestyles[1], label='Impact'),
             #Line2D([0], [0], color='black', linestyle=self.linestyles[2], label='PTM'),
             Line2D([0], [0], color='black', marker=self.markerstyles[0], linestyle='None', label='GloFAS'),
             Line2D([0], [0], color='black', marker=self.markerstyles[1], linestyle='None', label='Google Flood Hub'),
