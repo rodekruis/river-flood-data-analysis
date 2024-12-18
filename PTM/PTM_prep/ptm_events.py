@@ -1,4 +1,4 @@
-from comparison.observation.HydroImpact import loop_over_stations, events_per_adm
+from comparison.observation.HydroImpact import loop_over_stations_obs, events_per_adm
 import pandas as pd 
 from datetime import datetime, timedelta
 import GloFAS.GloFAS_prep.configuration as cfg
@@ -6,9 +6,9 @@ columnID = 'StationName'
 # k = [upstream, downstream], v = days of propagation time 
 
 
-def ptm_events(DNHstations, DataDir, RP, StationCombos):
+def ptm_events(DNHstations, DataDir, thresholdtype, threshold_value, StationCombos):
     # Generate station events data
-    station_events_df = loop_over_stations(DNHstations, DataDir, RP)
+    station_events_df = loop_over_stations_obs(DNHstations, DataDir, f'{thresholdtype}',threshold_value,value_col='Value')
     pred_ptm_events = []
     
     # Iterate through station combinations

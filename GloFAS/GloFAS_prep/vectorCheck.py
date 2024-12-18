@@ -11,7 +11,7 @@ def df_from_txt_or_csv (vector):
     if vector.endswith ('.csv'):
         df = pd.read_csv(vector)
     elif vector.endswith ('.txt'):
-        df = pd.read_csv (vector, sep="; ", header=0)
+        df = pd.read_csv (vector, sep=",", header=0)
     return df
 
 def checkVectorFormat(vector, shapeType=None, crs='EPSG:4326', placement='real'):
