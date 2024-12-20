@@ -85,7 +85,6 @@ def collect_performance_measures_over_station(StationName, DataDir, leadtimes, r
                                 data['FAR'][model][comparison_type]['percentiles'][pct_idx, lt_idx] = far_value
                         except Exception as e:
                             print(f"Error reading file {file_path}: {e}, skipping.")
-    
     return data
 
 def collect_performance_measures_over_admin(admin_unit, DataDir, leadtimes, return_periods, percentiles):
