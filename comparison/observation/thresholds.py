@@ -245,7 +245,43 @@ def plot_diagnostics(series, shape_gev, loc_gev, scale_gev, loc_gumbel, scale_gu
 
     plt.tight_layout()
     plt.show()
+def flood_frequency_curve (hydro_df, value_col):
+    annual_max = calculate_max_discharge (hydro_df, value_col, timescale='Year')
+    n = len(annual_max)
+    return_periods = (n + 1) / np.arange(1, n + 1)  # Return period = (N + 1) / Rank
 
+    # Step 3: Fit distributions
+    # Gumbel Distribution
+    gumbel_params = gumbel_r.fit(annual_max)
+    gumbel_rv = gumbel_r(*gumbel_params)
+
+    # GEV Distribution
+    gev_params = genextreme.fit(annual_max)
+    gev_rv = genextreme(*gev_params)
+
+    # Step 4: Calculate theoretical frequencies
+    return_periods_theoretical = np.linspace(1.01, 20, 5)  # Return periods for smooth curves
+    probabilities_theoretical = 1 - 1 / return_periods_theoretical
+
+    # Quantiles for Gumbel and GEV
+    gumbel_quantiles = gumbel_rv.ppf(probabilities_theoretical)
+    gev_quantiles = gev_rv.ppf(probabilities_theoretical)
+    gev_quantiles 
+    # Step 5: Plot the curves
+    plt.figure(figsize=(10, 6))
+    plt.plot(return_periods, annual_max[::-1], 'o', label="GloFAS data", color='black')  # Observed data
+    plt.plot(return_periods_theoretical, gumbel_quantiles, label="Gumbel Distribution", color='blue')
+    #plt.plot(return_periods_theoretical, gev_quantiles, label="GEV Distribution by Scipy", color='red')
+
+    # Formatting the plot
+    #plt.xscale('log')
+    plt.yscale('log')
+    plt.xlabel("Return Period (years)")
+    plt.ylabel("Flood Magnitude")
+    plt.title("Flood Frequency Curve")
+    plt.grid(True, which='both', linestyle='--', linewidth=0.5)
+    plt.legend()
+    plt.show()
 
 if __name__ == '__main__':
     station = 'Bamako'
@@ -260,9 +296,9 @@ if __name__ == '__main__':
     )
 
     df['percentile_40.0'] = df['percentile_40.0'].interpolate(method='time')
-
+    flood_frequency_curve(df, value_col='percentile_40.0')
     series = csv_to_cleaned_series(Q_Bamako_csv)
-
+    
     # GEV modeling
     model = EVA(series)
     model.get_extremes(method='BM', block_size="365D")
@@ -283,6 +319,6 @@ if __name__ == '__main__':
     print(f"95th Percentile (GEV): {percentile95_GEV}")
     print(f"95th Percentile (Gumbel): {percentile95_Gumbel}")
 
-    shape_gev, loc_gev, scale_gev = Q_GEV_fit (df, value_col='percentile_40.0', timescale='Year')
-    loc_gumbel, scale_gumbel = Q_Gumbel_fit(df, value_col='percentile_40.0')
-    plot_diagnostics(series, shape_gev, loc_gev, scale_gev, loc_gumbel, scale_gumbel, return_periods)
+    # shape_gev, loc_gev, scale_gev = Q_GEV_fit (df, value_col='percentile_40.0', timescale='Year')
+    # loc_gumbel, scale_gumbel = Q_Gumbel_fit(df, value_col='percentile_40.0')
+    # plot_diagnostics(series, shape_gev, loc_gev, scale_gev, loc_gumbel, scale_gumbel, return_periods)
