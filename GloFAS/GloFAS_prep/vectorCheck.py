@@ -5,6 +5,7 @@ from pathlib import Path
 from rasterstats import zonal_stats
 from shapely import wkt
 from shapely.geometry import Point
+
 import rioxarray as rio
 
 def df_from_txt_or_csv (vector): 
@@ -39,7 +40,7 @@ def checkVectorFormat(vector, shapeType=None, crs='EPSG:4326', placement='real')
         if isinstance(vector, (str, Path)):
             vector = str(vector)  # Ensure compatibility with string operations
             # Check file extensions and load accordingly
-            if vector.endswith(('.shp', '.gpkg')):
+            if vector.endswith(('.shp', '.gpkg','.geojson')):
                 vectorGDF = gpd.read_file(vector).to_crs(crs)
             elif vector.endswith(('.csv', '.txt')):
                 # Load CSV and convert to GeoDataFrame based on shapeType

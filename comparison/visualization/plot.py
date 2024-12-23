@@ -68,11 +68,11 @@ class Visualizer:
 
         # Titles and metrics to display
         titles = ['POD (Probability of Detection)', 'FAR (False Alarm Ratio)']
-        metrics = ['pod', 'far']
-
+        if model == 'GloFAS':
+            metrics = ['pod', 'far']
+        elif model == 'GoogleFloodHub': 
+            metrics = ['POD', 'FAR']
         # Define color maps
-
-
         for ax, metric, title, cmap in zip(axes, metrics, titles, [self.cmap, self.cmap_r]):
             # Plot each metric
             self.gdf_shape.plot(ax=ax, color='lightgrey', alpha=0.5)
@@ -336,6 +336,13 @@ class Visualizer:
         plt.show()
 if __name__ =='__main__': 
     vis = Visualizer(cfg.DataDir, cfg.admPath, cfg.leadtimes, cfg.RPsyr, cfg.percentiles)
+    comparisonType = 'Impact'
+    model = 'GoogleFloodHub'
+    for RPyr in cfg.RPsyr: 
+        for leadtime in cfg.leadtimes: 
+            scores_path = f"{cfg.DataDir}/{model}/{comparisonType}/GFH_vs_IMPACT_{leadtime:.0f}lt_{RPyr:.1f}rp.geojson"
+            scores_by_commune_gdf = checkVectorFormat(scores_path)
+            vis.map_pod_far (scores_by_commune_gdf, RPyr, leadtime, comparisonType, model)
     # BasinName = 'Niger'
     # StationName = 'Bamako'
     # CorrespondingAdminUnit = 'Bamako'
