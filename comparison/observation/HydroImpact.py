@@ -102,7 +102,7 @@ def stampHydroTrigger(hydro_df, StationName, type_of_extremity, probability, val
     elif type_of_extremity == 'percentile': # assuming above 20 is percentile, RP is percentile instead 
         Q_prob = Q_Gumbel_fit_percentile (hydro_df, probability, value_col) 
     else: 
-        print ('no such type of extremity')
+        raise ValueError (f"no such type of extremity: {type_of_extremity}, pick 'percentile'or 'RP'")
     #print (f"for {StationName} : return period Q= {QRP}")
     if not isinstance(Q_prob, (int, float)):
         raise ValueError(f"Expected QRP to be a scalar (int or float), but got {type(Q_prob)}.")
