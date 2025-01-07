@@ -1,4 +1,4 @@
-admin_unit;events;flood_start;flood_end;duration;peak_streamflow
+identifier;events;flood_start;flood_end;duration;peak_streamflow
 ML0101;0;2018-08-31;2018-09-28;29;1467.357421875
 ML0101;1;2019-08-30;2019-09-28;30;1348.0521240234375
 ML0101;2;2020-08-31;2020-10-16;47;1732.9112548828125
