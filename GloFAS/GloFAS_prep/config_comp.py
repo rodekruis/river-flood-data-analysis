@@ -23,7 +23,7 @@ impact_csvPath = DataDir / "Impact_data/impact_events_per_admin_529.csv"
 settlements_tif = DataDir / "GlobalHumanSettlement/GHS_BUILT_S_E2030_GLOBE_R2023A_54009_100_V1_0.tif"
 
 crs = f'EPSG:4326' 
-RPsyr = [1.5, 2.0, 5.0, 10.0] # return period threshold in years
+RPsyr = [1.5, 2, 5, 10] # return period threshold in years
 percentiles = [95, 98, 99] 
 leadtimes = [72, 96, 120,144, 168] # add also 24hours
 startYear = 2016 # could be 2004 but needs to be 2016 since there is no google data available before 

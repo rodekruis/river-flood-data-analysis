@@ -18,7 +18,7 @@ class Visualizer:
             "#a65628", "#f781bf", "#999999", "#a6cee3", 
             "#009E73", "#0072B2"
             ]#['tab:blue', 'tab:orange', 'tab:green', 'tab:red', 'tab:purple', 'tab:brown', 'tab:pink', 'tab:gray', 'tab:olive', 'tab:cyan', ] # adjust pls if you want 
-        self.linestyles = ['-', '--','-.' ]
+        self.linestyles = [':', '-','-.' ]
         self.markerstyles =['o','v', 's']
         self.comparisonTypes = ['Observation']#, 'Impact']
         self.percentiles = percentiles
@@ -87,79 +87,6 @@ class Visualizer:
         plt.savefig(filePath)
         plt.show()
 
-    def performance_over_param(self, admin_unit, data, standard_RP=5, standard_leadtime=168): 
-        fig, axs = plt.subplots(2, 2, figsize=(10, 7))
-        fig.suptitle(f'Performance Metrics for {admin_unit}', fontsize=16)
-        leadtimes = data['leadtimes']
-        lt_idx = leadtimes.index(standard_leadtime)
-        return_periods = data['return_periods']
-        RP_idx = return_periods.index(standard_RP)
-        leadtimes_x_lim = [min(leadtimes), max(leadtimes)]
-        RP_x_lim = [min(return_periods)-0.5, max(return_periods)+0.5]
-        
-        # Plot 1: POD against leadtime
-        ax = axs[0, 0]
-        for model, color in zip(self.models, self.colors):
-            # 2 in return period is 5yrs of return period !! 0=1.5 1=2, 2= 5
-            ax.plot(leadtimes, data['POD'][model]['Observation'][RP_idx,:], color=color,marker=self.markerstyles[0], linestyle=self.linestyles[0], label=f'{model} (Obs)')
-            ax.plot(leadtimes, data['POD'][model]['Impact'][RP_idx,:], color=color, marker=self.markerstyles[1], linestyle=self.linestyles[1], label=f'{model} (Impact)')
-        ax.set_xlabel('Leadtime (hours)')
-        ax.set_ylabel('POD')
-        #ax.set_title('POD vs Leadtime')
-        ax.set_xlim (leadtimes_x_lim )
-        ax.set_ylim([-0.05,1.05])
-        ax.text (30, 0.97, f'Return period={standard_RP:.1f} years')
-        #ax.legend()
-        #ax.grid(True)
-
-        # Plot 2: POD against return period
-        ax = axs[0, 1]
-        for model, color in zip(self.models, self.colors):
-            # 4th index in leadtime index is 168 hours, 7 days 
-            ax.plot(return_periods, data['POD'][model]['Observation'][:,lt_idx], color=color,marker=self.markerstyles[0], linestyle=self.linestyles[0], label=f'{model} (Obs)')
-            ax.plot(return_periods, data['POD'][model]['Impact'][:,lt_idx], color=color, marker=self.markerstyles[1], linestyle=self.linestyles[1], label=f'{model} (Impact)')
-        ax.set_xlabel('Return Period (years)')
-        ax.set_ylabel('POD')
-        #ax.set_title('POD vs Return Period')
-        ax.set_xlim (RP_x_lim)
-        ax.set_ylim([-0.05,1.05])
-        ax.text (1.6, 0.97, f'Leadtime={standard_leadtime:.0f} hours ({standard_leadtime/24:.0f} days)')
-        ax.legend(bbox_to_anchor=(1.9,1.0), loc='upper right')
-        #ax.grid(True)
-
-        # Plot 3: FAR against leadtime
-        ax = axs[1, 0]
-        for model, color in zip(self.models, self.colors):
-            ax.plot ()
-            ax.plot(leadtimes, data['FAR'][model]['Observation'][RP_idx,:], color=color,marker=self.markerstyles[0], linestyle=self.linestyles[0], label=f'{model} (Obs)')
-            ax.plot(leadtimes, data['FAR'][model]['Impact'][RP_idx,:], color=color,marker=self.markerstyles[1], linestyle=self.linestyles[1], label=f'{model} (Impact)')
-        ax.set_xlabel('Leadtime (hours)')
-        ax.set_ylabel('FAR')
-        #ax.set_title('FAR vs Leadtime')
-        ax.set_xlim (leadtimes_x_lim )
-        ax.set_ylim([-0.05,1.05])
-        ax.text (30, 0.97, f'Return period={standard_RP:.1f} years')
-        #ax.legend()
-        #ax.grid(True)
-
-        # Plot 4: FAR against return period
-        ax = axs[1, 1]
-        for model, color in zip(self.models, self.colors):
-            ax.plot(return_periods, data['FAR'][model]['Observation'][:,lt_idx], color=color, marker=self.markerstyles[0], linestyle=self.linestyles[0], label=f'{model} (Obs)')
-            ax.plot(return_periods, data['FAR'][model]['Impact'][:,lt_idx], color=color, marker=self.markerstyles[1], linestyle=self.linestyles[1], label=f'{model} (Impact)')
-        ax.set_xlabel('Return Period (years)')
-        ax.set_ylabel('FAR')
-        #ax.set_title('FAR vs Return Period')
-        ax.set_xlim (RP_x_lim)
-        ax.set_ylim([-0.05,1.05])
-        ax.text (1.05, 0.97, f'Leadtime={standard_leadtime:.0f} hours ({standard_leadtime/24:.0f} days)')
-        #ax.legend()
-        #ax.grid(True)
-
-        plt.tight_layout(rect=[0, 0.03, 1, 0.95])
-        filePath = f'{self.DataDir}/comparison/results/performance_metrics_{admin_unit}_RP{standard_RP:.1f}_leadtime{standard_leadtime}.png'
-        plt.savefig(filePath)
-        plt.show()
 
     def performance_metrics(self, 
                             spatial_units, 
@@ -200,13 +127,13 @@ class Visualizer:
             raise ValueError (f"choose spatial_unit_type of 'AdminUnits' or 'StationNames', not {spatial_unit_type}")
 
         fig, axs = plt.subplots(2, 1, figsize=(10, 7))
-        fig.suptitle(f'Performance metrics across administrative units over',fontsize=12) # {"lead time" if x_axis == "leadtime" el "return period"}',
+        fig.suptitle(f'Performance metrics for stations over {x_axis}',fontsize=12) # {"lead time" if x_axis == "leadtime" el "return period"}',
 
         # Determine axis values based on mode
         if x_axis == 'leadtime':
             x_values = self.leadtimes
             x_label = 'Leadtime (hours)'
-            x_lim = [min(x_values), max(x_values)]
+            x_lim = [min(x_values)- 3, max(x_values)+3]
             if threshold_type=='return_periods':
                 standard_idx = self.RPsyr.index(standard_value)
                 secondary_text = f'Return period={standard_value:.1f} years'
@@ -219,12 +146,12 @@ class Visualizer:
             x_values = self.percentiles 
             x_label = 'Percentile (%)'
             standard_idx = self.leadtimes.index(standard_value)
-            x_lim = [min(x_values) - 0.5, max(x_values) + 0.5]
+            x_lim = [min(x_values) - 0.1, max(x_values) + 0.1]
             secondary_text = f'Leadtime={standard_value:.0f} hours ({standard_value / 24:.0f} days)'
         elif x_axis == 'return_period':
             x_values = self.RPsyr
             x_label = 'Return Period (years)'
-            x_lim = [min(x_values) - 0.5, max(x_values) + 0.5]
+            x_lim = [min(x_values) - 0.2, max(x_values) + 0.2]
             standard_idx = self.leadtimes.index(standard_value)
             secondary_text = f'Leadtime={standard_value:.0f} hours ({standard_value / 24:.0f} days)'
         else: 
@@ -238,12 +165,12 @@ class Visualizer:
                     y_values = data_all_admin[spatial_units.index(spatial_unit)][1]['POD'][model]['Observation'][threshold_type][standard_idx, :]
                 else:
                     y_values = data_all_admin[spatial_units.index(spatial_unit)][1]['POD'][model]['Observation'][threshold_type][:, standard_idx]
-                ax.plot(x_values, y_values, color=color, linestyle=linestyle, marker=marker, markersize=self.markersize)
-        ax.set_xlabel(x_label)
+                ax.plot(x_values, y_values, c=color, linestyle=linestyle, marker=marker, markersize=self.markersize)#, markerfacecolor='none')
+        #ax.set_xlabel(x_label)
         ax.set_ylabel('POD')
         ax.set_xlim(x_lim)
         ax.set_ylim([-0.05, 1.05])
-        ax.fill_between(x_lim, ax.get_ylim()[0], self.POD_threshold, color='red', alpha=0.3)
+        ax.fill_between(x_lim, ax.get_ylim()[0], self.POD_threshold, color='red', alpha=0.2)
         ax.text(x_lim[0] + ((x_lim[1]-x_lim[0])/100), 1.10, secondary_text)
 
         # Plot FAR
@@ -254,19 +181,19 @@ class Visualizer:
                     y_values = data_all_admin[spatial_units.index(spatial_unit)][1]['FAR'][model]['Observation'][threshold_type][standard_idx, :]
                 else:
                     y_values = data_all_admin[spatial_units.index(spatial_unit)][1]['FAR'][model]['Observation'][threshold_type][:, standard_idx]
-                ax.plot(x_values, y_values, color=color, linestyle=linestyle, marker=marker, markersize=self.markersize)
+                ax.plot(x_values, y_values, c=color, linestyle=linestyle, marker=marker, markersize=self.markersize) #, markerfacecolor='none')
         ax.set_xlabel(x_label)
         ax.set_ylabel('FAR')
         ax.set_xlim(x_lim)
         ax.set_ylim([-0.05, 1.05])
-        ax.fill_between(x_lim, ax.get_ylim()[1], self.FAR_threshold, color='red', alpha=0.3)
-        ax.text(x_lim[0] + ((x_lim[1]-x_lim[0])/100), 1.10, secondary_text)
+        ax.fill_between(x_lim, ax.get_ylim()[1], self.FAR_threshold, color='red', alpha=0.2)
+        #ax.text(x_lim[0] + ((x_lim[1]-x_lim[0])/100), 1.10, secondary_text)
 
         # Custom Legend
         from matplotlib.lines import Line2D
         custom_lines = [
             Line2D([0], [0], color='black', marker=self.markerstyles[0], linestyle=self.linestyles[0], label='GloFAS'),
-            #Line2D([0], [0], color='black', marker=self.markerstyles[1], linestyle=self.linestyles[1], label='Google Flood Hub'),
+            Line2D([0], [0], color='black', marker=self.markerstyles[1], linestyle=self.linestyles[1], label='Google FloodHub'),
             Line2D([0], [0], color='black', marker=self.markerstyles[2], linestyle=self.linestyles[2], label='PTM'),
         ]
         color_lines = [Line2D([0], [0], color=color, lw=2, label=unit) for color, unit in zip(self.admin_colors, spatial_units)]
@@ -341,63 +268,61 @@ class Visualizer:
         plt.show()
 if __name__ =='__main__': 
     vis = Visualizer(cfg.DataDir, cfg.admPath, cfg.leadtimes, cfg.RPsyr, cfg.percentiles)
-    # comparisonType = 'Impact'
-    # model = 'GoogleFloodHub'
-    # for RPyr in cfg.RPsyr: 
-    #     for leadtime in cfg.leadtimes: 
-    #         scores_path = f"{cfg.DataDir}/{model}/{comparisonType}/GFH_vs_IMPACT_{leadtime:.0f}lt_{RPyr:.1f}rp.geojson"
-    #         scores_by_commune_gdf = checkVectorFormat(scores_path)
-    #         vis.map_pod_far (scores_by_commune_gdf, RPyr, leadtime, comparisonType, model)
-    BasinName = 'Niger'
-    StationName = 'Bamako'
-    CorrespondingAdminUnit = 'Bamako'
+    # # comparisonType = 'Impact'
+    # # model = 'GoogleFloodHub'
+    # # for RPyr in cfg.RPsyr: 
+    # #     for leadtime in cfg.leadtimes: 
+    # #         scores_path = f"{cfg.DataDir}/{model}/{comparisonType}/GFH_vs_IMPACT_{leadtime:.0f}lt_{RPyr:.1f}rp.geojson"
+    # #         scores_by_commune_gdf = checkVectorFormat(scores_path)
+    # #         vis.map_pod_far (scores_by_commune_gdf, RPyr, leadtime, comparisonType, model)
+    # BasinName = 'Niger'
+    # StationName = 'Bamako'
+    # CorrespondingAdminUnit = 'Bamako'
     
-    leadtime = 168
-    return_period = 5 # year 
-    df_obs = transform_hydro(f"{cfg.DataDir}/DNHMali_2019/Q_stations/{BasinName}_{StationName}.csv",cfg.startYear, cfg.endYear)
-    df_glofas = pd.read_csv (f"{cfg.stationsDir}/GloFAS_Q/timeseries/discharge_timeseries_{StationName}_{leadtime}.csv")
-    df_gfh = pd.read_csv (f"{cfg.DataDir}/GoogleFloodHub/timeseries/Bamako_streamflow.csv")
+    # leadtime = 168
+    # return_period = 5 # year 
+    # df_obs = transform_hydro(f"{cfg.DataDir}/DNHMali_2019/Q_stations/{BasinName}_{StationName}.csv",cfg.startYear, cfg.endYear)
+    # df_glofas = pd.read_csv (f"{cfg.stationsDir}/GloFAS_Q/timeseries/discharge_timeseries_{StationName}_{leadtime}.csv")
+    # df_gfh = pd.read_csv (f"{cfg.DataDir}/GoogleFloodHub/timeseries/Bamako_streamflow.csv")
 
-    df_gfh ['ValidTime'] = pd.to_datetime(df_gfh["issue_time"], format="%Y-%m-%d") + timedelta(days=leadtime/24)
+    # df_gfh ['ValidTime'] = pd.to_datetime(df_gfh["issue_time"], format="%Y-%m-%d") + timedelta(days=leadtime/24)
+    # df_glofas['ValidTime'] = pd.to_datetime(df_glofas["ValidTime"], format="%Y-%m-%d")
 
+    # # Check for any invalid dates
+    # if df_glofas['ValidTime'].isnull().any():
+    #     print("Warning: Some dates in 'date_col' ofglofas could not be parsed and are set to NaT.")
+    # if df_gfh['ValidTime'].isnull().any():
+    #     print("Warning: Some dates in 'date_col' of gfh could not be parsed and are set to NaT.")
+    # # Set the index to the datetime column
+    # df_glofas.set_index('ValidTime', inplace=True)
+    # df_glofas.sort_index(inplace=True)
 
-    df_glofas['ValidTime'] = pd.to_datetime(df_glofas["ValidTime"], format="%Y-%m-%d")
+    # df_gfh.set_index('ValidTime', inplace=True)
+    # df_gfh.sort_index(inplace=True)
 
-    # Check for any invalid dates
-    if df_glofas['ValidTime'].isnull().any():
-        print("Warning: Some dates in 'date_col' ofglofas could not be parsed and are set to NaT.")
-    if df_gfh['ValidTime'].isnull().any():
-        print("Warning: Some dates in 'date_col' of gfh could not be parsed and are set to NaT.")
-    # Set the index to the datetime column
-    df_glofas.set_index('ValidTime', inplace=True)
-    df_glofas.sort_index(inplace=True)
+    # df_impact = pd.read_csv (cfg.impact_csvPath, delimiter=';', header=0)
+    # RP_gfh = Q_Gumbel_fit_RP (df_gfh, return_period, f'{leadtime/24:.0f} days')
 
-    df_gfh.set_index('ValidTime', inplace=True)
-    df_gfh.sort_index(inplace=True)
-
-    df_impact = pd.read_csv (cfg.impact_csvPath, delimiter=';', header=0)
-    RP_gfh = Q_Gumbel_fit_RP (df_gfh, return_period, f'{leadtime/24:.0f} days')
-
-    RP_glofas = Q_Gumbel_fit_RP(df_glofas, return_period, 'percentile_40.0')
+    # RP_glofas = Q_Gumbel_fit_RP(df_glofas, return_period, 'percentile_40.0')
 
 
-    RP_obs = Q_Gumbel_fit_RP (df_obs, return_period, 'Value')
+    # RP_obs = Q_Gumbel_fit_RP (df_obs, return_period, 'Value')
     
-    vis.plot_flood_and_impact_events(df_glofas,
-                                        df_gfh, 
-                                        df_impact, 
-                                        df_obs, 
-                                        StationName,
-                                        CorrespondingAdminUnit, 
-                                        leadtime,
-                                        return_period,
-                                        '2016-07-01', 
-                                        '2019-01-01', 
-                                        RP_glofas, 
-                                        RP_gfh,
-                                        RP_obs)
+    # vis.plot_flood_and_impact_events(df_glofas,
+    #                                     df_gfh, 
+    #                                     df_impact, 
+    #                                     df_obs, 
+    #                                     StationName,
+    #                                     CorrespondingAdminUnit, 
+    #                                     leadtime,
+    #                                     return_period,
+    #                                     '2016-07-01', 
+    #                                     '2019-01-01', 
+    #                                     RP_glofas, 
+    #                                     RP_gfh,
+    #                                     RP_obs)
     comparisonTypes = ['Observation']
-    models = ['GloFAS', 'PTM']
+    models = ['GloFAS', 'GoogleFloodHub', 'PTM']
     # for model in models: 
     #     for comparisonType in comparisonTypes:
     #         for leadtime in cfg.leadtimes: 
@@ -409,20 +334,18 @@ if __name__ =='__main__':
     #                 except:
     #                     print (f'No path for leadtime: {leadtime}, RP: {RPyr}, {comparisonType}, for model: {model}') 
     #                     continue
-    # station_names = [ 'GUELELINKORO','BAMAKO', 'BANANKORO', 'KOULIKORO','MOPTI', 'DIRE', 'ANSONGO', 'GAO', 'SOFARA', 'DOUNA', 'BOUGOUNI', 'PANKOUROU','BAFING MAKANA', 'KAYES']
+    # removed gao and ansongo from stations 
+    station_names = [ 'GUELELINKORO','BAMAKO', 'BANANKORO', 'KOULIKORO','MOPTI', 'DIRE', 'SOFARA', 'DOUNA', 'BOUGOUNI', 'PANKOUROU','BAFING MAKANA', 'KAYES']
     # #admin_units = [''][#['BLA', 'SAN','KIDAL', 'TOMINIAN', 'KANGABA', 'KOULIKORO', 'KOLONDIEBA', 'MOPTI', 'BAMAKO', 'SIKASSO', 'SEGOU', 'KATI']
-    # for leadtime in cfg.leadtimes:
-    #     vis.performance_metrics(station_names, spatial_unit_type='StationNames', x_axis='percentile', standard_value=leadtime, threshold_type='percentiles')
-    #     vis.performance_metrics(station_names, spatial_unit_type='StationNames', x_axis='return_period', standard_value=leadtime, threshold_type='return_periods')
-    # for RPyr in cfg.RPsyr:
-    #     vis.performance_metrics (station_names, spatial_unit_type='StationNames', x_axis='leadtime', standard_value=RPyr)
-    # for percentile in cfg.percentiles: 
-    #     vis.performance_metrics (station_names, spatial_unit_type='StationNames', x_axis='leadtime', standard_value=percentile, threshold_type='percentiles')
-    # # for admin_unit in admin_units:
-    #     data = collect_performance_measures(admin_unit, cfg.DataDir, cfg.leadtimes, cfg.RPsyr)
-    #     for leadtime in cfg.leadtimes: 
-    #         for RPyr in cfg.RPsyr:
-    #             vis.performance_over_param(admin_unit, data, standard_RP=RPyr, standard_leadtime=leadtime)
+    
+    for leadtime in cfg.leadtimes:
+        vis.performance_metrics(station_names, spatial_unit_type='StationNames', x_axis='percentile', standard_value=leadtime, threshold_type='percentiles')
+        vis.performance_metrics(station_names, spatial_unit_type='StationNames', x_axis='return_period', standard_value=leadtime, threshold_type='return_periods')
+    for RPyr in cfg.RPsyr:
+        vis.performance_metrics (station_names, spatial_unit_type='StationNames', x_axis='leadtime', standard_value=RPyr)
+    for percentile in cfg.percentiles: 
+        vis.performance_metrics (station_names, spatial_unit_type='StationNames', x_axis='leadtime', standard_value=percentile, threshold_type='percentiles')
+
             
 
 # to do : 

@@ -1,4 +1,5 @@
 import os
+from GloFAS.GloFAS_prep.text_formatter import capitalize
 import pandas as pd
 import numpy as np
 
@@ -53,36 +54,66 @@ def collect_performance_measures_over_station(StationName, DataDir, leadtimes, r
             # Collect data for return periods
             for rp_idx, return_period in enumerate(return_periods):
                 for lt_idx, leadtime in enumerate(leadtimes):
-                    file_name = f'scores_byCommuneRP{return_period:.1f}_yr_leadtime{leadtime}.csv'
-                    file_path = os.path.join(comp_dir, file_name)
+
+                    if model == 'GoogleFloodHub':
+                        if return_period == int(return_period):
+                            return_period = int(return_period)
+                        else: 
+                            return_period = float(return_period)
+                        file_name = f'GFH_vs_OBS_{leadtime}lt_{return_period}rp.csv'
+                        
+                    else:
+                        file_name = f'scores_byCommuneRP{return_period:.1f}_yr_leadtime{leadtime}.csv'
                     
+                    file_path = os.path.join(comp_dir, file_name)
                     if os.path.exists(file_path):
                         try:
                             df = pd.read_csv(file_path)
-                            row = df[df['StationName'] == StationName]
-                            if not row.empty:
-                                pod_value = row['pod'].values[0] if 'pod' in row else np.nan
-                                far_value = row['far'].values[0] if 'far' in row else np.nan
-                                data['POD'][model][comparison_type]['return_periods'][rp_idx, lt_idx] = pod_value
-                                data['FAR'][model][comparison_type]['return_periods'][rp_idx, lt_idx] = far_value
+                            if model == 'GoogleFloodHub':
+                                df['identifier'] = df['identifier'].apply(capitalize)
+                                row = df[df['identifier'] == StationName]
+                                if not row.empty:
+                                    pod_value = row['POD'].values[0] if 'POD' in row else np.nan
+                                    far_value = row['FAR'].values[0] if 'FAR' in row else np.nan
+                                    data['POD'][model][comparison_type]['return_periods'][rp_idx, lt_idx] = pod_value
+                                    data['FAR'][model][comparison_type]['return_periods'][rp_idx, lt_idx] = far_value
+                            else:
+                                row = df[df['StationName'] == StationName]
+                                if not row.empty:
+                                    pod_value = row['pod'].values[0] if 'pod' in row else np.nan
+                                    far_value = row['far'].values[0] if 'far' in row else np.nan
+                                    data['POD'][model][comparison_type]['return_periods'][rp_idx, lt_idx] = pod_value
+                                    data['FAR'][model][comparison_type]['return_periods'][rp_idx, lt_idx] = far_value
                         except Exception as e:
                             print(f"Error reading file {file_path}: {e}, skipping.")
             
             # Collect data for percentiles
             for pct_idx, percentile in enumerate(percentiles):
-                for lt_idx, leadtime in enumerate(leadtimes):#so a bit weird format but ok:
-                    file_name = f'scores_byCommuneRP{percentile:.1f}_yr_leadtime{leadtime}.csv'
-                    file_path = os.path.join(comp_dir, file_name)
+                for lt_idx, leadtime in enumerate(leadtimes):
+                    if model == 'GoogleFloodHub':
+                        file_name = f'GFH_vs_OBS_{leadtime}lt_{percentile}pc.csv'
+                    else:
+                        file_name = f'scores_byCommuneRP{percentile:.1f}_yr_leadtime{leadtime}.csv'
                     
+                    file_path = os.path.join(comp_dir, file_name)
                     if os.path.exists(file_path):
                         try:
                             df = pd.read_csv(file_path)
-                            row = df[df['StationName'] == StationName]
-                            if not row.empty:
-                                pod_value = row['pod'].values[0] if 'pod' in row else np.nan
-                                far_value = row['far'].values[0] if 'far' in row else np.nan
-                                data['POD'][model][comparison_type]['percentiles'][pct_idx, lt_idx] = pod_value
-                                data['FAR'][model][comparison_type]['percentiles'][pct_idx, lt_idx] = far_value
+                            if model == 'GoogleFloodHub':
+                                df['identifier'] = df['identifier'].apply(capitalize)
+                                row = df[df['identifier'] == StationName]
+                                if not row.empty:
+                                    pod_value = row['POD'].values[0] if 'POD' in row else np.nan
+                                    far_value = row['FAR'].values[0] if 'FAR' in row else np.nan
+                                    data['POD'][model][comparison_type]['percentiles'][pct_idx, lt_idx] = pod_value
+                                    data['FAR'][model][comparison_type]['percentiles'][pct_idx, lt_idx] = far_value
+                            else:
+                                row = df[df['StationName'] == StationName]
+                                if not row.empty:
+                                    pod_value = row['pod'].values[0] if 'pod' in row else np.nan
+                                    far_value = row['far'].values[0] if 'far' in row else np.nan
+                                    data['POD'][model][comparison_type]['percentiles'][pct_idx, lt_idx] = pod_value
+                                    data['FAR'][model][comparison_type]['percentiles'][pct_idx, lt_idx] = far_value
                         except Exception as e:
                             print(f"Error reading file {file_path}: {e}, skipping.")
     return data
@@ -178,10 +209,7 @@ def collect_performance_measures_over_admin(admin_unit, DataDir, leadtimes, retu
                                 data['FAR'][model][comparison_type]['percentiles'][pct_idx, lt_idx] = far_value
                         except Exception as e:
                             print(f"Error reading file {file_path}: {e}, skipping.")
-    
     return data
-
-
 
 if __name__ =='__main__': 
     # These regions include Bamako, Koulikoro, Ségou, Mopti, Timbouctou and Gao, which have historically experienced frequent and severe flood events. 
@@ -190,6 +218,6 @@ if __name__ =='__main__':
     # Segou is in Segou, Observation data recorded  ,  only false negatives, but there is impact
     # Kolondieba in Sikasso, okay score in obs, no impact 
     # San in segou: impact data
-
-    GloFASdata = collect_performance_measures_over_station('BAMAKO', cfg.DataDir, cfg.leadtimes, cfg.RPsyr, cfg.percentiles)
-    print (GloFASdata)
+    
+    Bamakodata = collect_performance_measures_over_station('BAMAKO', cfg.DataDir, cfg.leadtimes, cfg.RPsyr, cfg.percentiles)
+    print (Bamakodata)
