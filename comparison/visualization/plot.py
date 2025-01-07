@@ -19,7 +19,7 @@ class Visualizer:
             "#009E73", "#0072B2"
             ]#['tab:blue', 'tab:orange', 'tab:green', 'tab:red', 'tab:purple', 'tab:brown', 'tab:pink', 'tab:gray', 'tab:olive', 'tab:cyan', ] # adjust pls if you want 
         self.linestyles = [':', '-','-.' ]
-        self.markerstyles =['o','v', 's']
+        self.markerstyles =['s','o', 'v']
         self.comparisonTypes = ['Observation']#, 'Impact']
         self.percentiles = percentiles
         self.RPsyr = RPsyr
@@ -194,7 +194,7 @@ class Visualizer:
         custom_lines = [
             Line2D([0], [0], color='black', marker=self.markerstyles[0], linestyle=self.linestyles[0], label='GloFAS'),
             Line2D([0], [0], color='black', marker=self.markerstyles[1], linestyle=self.linestyles[1], label='Google FloodHub'),
-            Line2D([0], [0], color='black', marker=self.markerstyles[2], linestyle=self.linestyles[2], label='PTM'),
+            #Line2D([0], [0], color='black', marker=self.markerstyles[2], linestyle=self.linestyles[2], label='PTM'),
         ]
         color_lines = [Line2D([0], [0], color=color, lw=2, label=unit) for color, unit in zip(self.admin_colors, spatial_units)]
         fig.legend(handles=custom_lines + color_lines,
@@ -321,21 +321,21 @@ if __name__ =='__main__':
     #                                     RP_glofas, 
     #                                     RP_gfh,
     #                                     RP_obs)
-    comparisonTypes = ['Observation']
+    comparisonTypes = ['Impact','Observation']
     models = ['GloFAS', 'GoogleFloodHub', 'PTM']
-    # for model in models: 
-    #     for comparisonType in comparisonTypes:
-    #         for leadtime in cfg.leadtimes: 
-    #             for RPyr in cfg.RPsyr:
-    #                 try:
-    #                     scores_path = f"{cfg.DataDir}/{model}/{comparisonType}/scores_byCommuneRP{RPyr:.1f}_yr_leadtime{leadtime:.0f}.gpkg"
-    #                     scores_by_commune_gdf = checkVectorFormat(scores_path)
-    #                     vis.map_pod_far(scores_by_commune_gdf, RPyr, leadtime, comparisonType, f'{model}')
-    #                 except:
-    #                     print (f'No path for leadtime: {leadtime}, RP: {RPyr}, {comparisonType}, for model: {model}') 
-    #                     continue
+    for model in models: 
+        for comparisonType in comparisonTypes:
+            for leadtime in cfg.leadtimes: 
+                for RPyr in cfg.RPsyr:
+                    try:
+                        scores_path = f"{cfg.DataDir}/{model}/{comparisonType}/scores_byCommuneRP{RPyr:.1f}_yr_leadtime{leadtime:.0f}.gpkg"
+                        scores_by_commune_gdf = checkVectorFormat(scores_path)
+                        vis.map_pod_far(scores_by_commune_gdf, RPyr, leadtime, comparisonType, f'{model}')
+                    except:
+                        print (f'No path for leadtime: {leadtime}, RP: {RPyr}, {comparisonType}, for model: {model}') 
+                        continue
     # removed gao and ansongo from stations 
-    station_names = [ 'GUELELINKORO','BAMAKO', 'BANANKORO', 'KOULIKORO','MOPTI', 'DIRE', 'SOFARA', 'DOUNA', 'BOUGOUNI', 'PANKOUROU','BAFING MAKANA', 'KAYES']
+    station_names = [ 'BAMAKO', 'BANANKORO', 'KOULIKORO','MOPTI','ANSONGO', 'DIRE', 'SOFARA', 'DOUNA', 'BOUGOUNI', 'PANKOUROU','BAFING MAKANA', 'DIBIYA', 'KAYES']
     # #admin_units = [''][#['BLA', 'SAN','KIDAL', 'TOMINIAN', 'KANGABA', 'KOULIKORO', 'KOLONDIEBA', 'MOPTI', 'BAMAKO', 'SIKASSO', 'SEGOU', 'KATI']
     
     for leadtime in cfg.leadtimes:

@@ -20,7 +20,9 @@ def parse_date_with_fallback(date_str, year):
         #print(f"Invalid date skipped: {date_str} for year {year}")
         return None
         
-def transform_hydro(csvPath, startYear=2004, endYear=2018): 
+    
+def transform_hydro(csvPath, startYear=1980, # to conform to gfh
+                     endYear=2018): 
     hydro_df_wide = pd.read_csv(csvPath, header=0)
     
     # Melt the wide-format DataFrame to long format
@@ -199,12 +201,12 @@ def loop_over_stations_obs(station_csv, DataDir, type_of_extremity, probability,
         BasinName= stationrow['Basin']
         stationPath = rf"{hydrodir}/{BasinName}_{StationName}.csv"
         try: 
-            print (f'calculating {StationName}, in {BasinName}')
+            
             hydro_df = transform_hydro (stationPath) # this actually looks good
         except: 
             print (f'no discharge measures found for station {StationName} in {BasinName}')
             continue
-
+        print (f'calculating {StationName}, in {BasinName}')
         trigger_df = stampHydroTrigger (hydro_df, StationName, type_of_extremity, probability, value_col)
         event_df = createEvent (trigger_df)
         event_df ['StationName'] = StationName
@@ -233,7 +235,7 @@ def loop_over_stations_pred(station_csv, stationsDir, probability, type_of_extre
                                     index_col=0,  # setting ValidTime as index column
                                     parse_dates=True)
         except:
-            print (f'no discharge series for station {StationName}')
+            print (f'no discharge series for station {StationName} in {BasinName}')
             continue
 
         trigger_df = stampHydroTrigger (glofas_df, StationName, type_of_extremity, probability, value_col)
@@ -278,13 +280,13 @@ if __name__=="__main__":
     date_col = 'ValidTime'
     value_col = 'percentile_40.0' # we're interested in 60% probability of being exceeded amongst the ensemble members 
     all_events = []
-    for leadtime in cfg.leadtimes:
-        #for RP in cfg.RPsyr: 
-            #loop_over_stations_obs (cfg.DNHstations, cfg.DataDir, 'RP', RP, value_col='Value')
-            #loop_over_stations_pred(cfg.DNHstations, cfg.stationsDir, RP, 'RP', value_col, leadtime)
-        for percentile in cfg.percentiles:
-            loop_over_stations_obs (cfg.DNHstations, cfg.DataDir, 'percentile', percentile, value_col='Value')
-            loop_over_stations_pred (cfg.DNHstations, cfg.stationsDir, percentile, 'percentile', value_col, leadtime)
+    # for leadtime in cfg.leadtimes:
+    for RP in cfg.RPsyr: 
+        loop_over_stations_obs (cfg.DNHstations, cfg.DataDir, 'RP', RP, value_col='Value')
+        #loop_over_stations_pred(cfg.DNHstations, cfg.stationsDir, RP, 'RP', value_col, leadtime)
+    for percentile in cfg.percentiles:
+        loop_over_stations_obs (cfg.DNHstations, cfg.DataDir, 'percentile', percentile, value_col='Value')
+        #loop_over_stations_pred (cfg.DNHstations, cfg.stationsDir, percentile, 'percentile', value_col, leadtime)
 
     # # running this script for the GloFAS 
     # #print (readcsv(f"{DataDir}/Données partagées - DNH Mali - 2019/Donne╠ües partage╠ües - DNH Mali - 2019/De╠übit du Niger a╠Ç Ansongo.csv"))
