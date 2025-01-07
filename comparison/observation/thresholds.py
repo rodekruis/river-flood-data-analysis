@@ -29,8 +29,15 @@ def calculate_max_discharge(hydro_df: pd.DataFrame,
         hydro_df.index = pd.to_datetime(hydro_df.index)
 
     hydro_df = hydro_df.copy()  
-
+    if hydro_df.index.isnull().any():
+        raise ValueError("Some index entries could not be converted to datetime.")
     hydro_df = hydro_df.loc[hydro_df.index < pd.to_datetime(f'{incomplete_lastyear}-01-01')]
+
+    if value_col not in hydro_df.columns:
+        raise KeyError(f"Column '{value_col}' not found in DataFrame.")
+    
+    hydro_df = hydro_df [[f'{value_col}']]
+
     hydro_df = (
         hydro_df
         .sort_index(ascending=True)
@@ -39,11 +46,10 @@ def calculate_max_discharge(hydro_df: pd.DataFrame,
         )
     if timescale == 'Year':
         hydro_df['Year'] = hydro_df.index.year
-
-        maximum =  hydro_df.groupby('Year')[value_col].max()
+        maximum =  hydro_df.groupby('Year').max()
     elif timescale == 'Day':
         hydro_df['Day_Date'] = hydro_df.index.date
-        maximum = hydro_df.groupby('Day_Date')[value_col].max()
+        maximum = hydro_df.groupby('Day_Date').max()
     else:
         raise ValueError("Invalid timescale. Use 'Year' or 'Day'.")
     return maximum

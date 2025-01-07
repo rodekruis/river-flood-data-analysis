@@ -20,7 +20,6 @@ def parse_date_with_fallback(date_str, year):
         #print(f"Invalid date skipped: {date_str} for year {year}")
         return None
         
-
 def transform_hydro(csvPath, startYear=2004, endYear=2018): 
     hydro_df_wide = pd.read_csv(csvPath, header=0)
     
@@ -90,7 +89,7 @@ def stampHydroTrigger(hydro_df, StationName, type_of_extremity, probability, val
         hydro_df.set_index(date_col, inplace=True)
         #print(f"Index successfully set to datetime using '{date_col}':\n{hydro_df.index}")
     else:
-        print(f"Error: Column '{date_col}' does not exist in the DataFrame, hopefully teh date is the index")
+        print(f"Warning: Column '{date_col}' does not exist in the DataFrame, hopefully the date is the index")
 
     # Ensure "Value" column exists in the DataFrame
     if value_col not in hydro_df.columns:

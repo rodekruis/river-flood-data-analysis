@@ -13,7 +13,14 @@ class FloodDefiner:
     def stampTrigger (self, floodProbability_gdf, actionLifetime, triggerProb):
         '''defines trigger by the floodprobability that it needs to exceed, as well as writes the timeduration at which the trigger is valid 
         actionLifetime = actionLifetime in days'''
-        
+        if isinstance(floodProbability_gdf, str): 
+            if floodProbability_gdf.endswith('.csv'):
+                delimiter = ";" if typeImpact == "Impact" else ","
+                floodProbability_gdf = pd.read_csv(floodProbability_gdf, delimiter=delimiter)
+            else:
+                floodProbability_gdf = gpd.read_file(floodProbability_gdf)
+        else:  # assuming other option is a DataFrame
+            floodProbability_gdf = floodProbability_gdf
         # make everything capital
         floodProbability_gdf[f'ADM{self.adminLevel}'] = floodProbability_gdf[f'ADM{self.adminLevel}'].apply(lambda x: unidecode.unidecode(x).upper())
         # start date is date of validity of the forecast 

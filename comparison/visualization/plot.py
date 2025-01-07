@@ -1,5 +1,6 @@
 import cmcrameri.cm as cmc #change colormaps
 import pandas as pd
+from datetime import datetime, timedelta
 from GloFAS.GloFAS_prep.vectorCheck import checkVectorFormat
 from GloFAS.GloFAS_prep.text_formatter import capitalize
 import matplotlib.pyplot as plt
@@ -10,7 +11,7 @@ from comparison.observation.thresholds import Q_Gumbel_fit_RP
 class Visualizer: 
     def __init__(self, DataDir, vector_adminMap, leadtimes, RPsyr, percentiles):
         self.models = ['GloFAS', 'GoogleFloodHub', 'PTM'] # is PTM best way to refer to the current trigger model in the EAP? 
-        self.colors = ['cornflowerblue', 'salmon','darkgreen']
+        self.colors = ['cornflowerblue', 'darkorange','darkgreen'] # 0 observation, 1 glofas, 2 gfh
         self.markersize = 12
         self.admin_colors = [
             "gold", "cornflowerblue", "#ff7f00", "#4daf4a", "#e41a1c", "#984ea3", 
@@ -278,7 +279,7 @@ class Visualizer:
         plt.show()
 
 
-    def plot_flood_and_impact_events(self, df_glofas, df_impact, df_obs, stationname, admin_unit, leadtime, return_period, start_time, end_time, threshold_glofas, threshold_obs ):
+    def plot_flood_and_impact_events(self, df_glofas, df_gfh, df_impact, df_obs, stationname, admin_unit, leadtime, return_period, start_time, end_time, threshold_glofas, threshold_gfh, threshold_obs ):
         """
         Plots observed discharge, predicted discharge, and flood impact events for a given administrative unit.
         
@@ -293,24 +294,26 @@ class Visualizer:
         """
         # Filter impact events for the specific admin unit
         df_impact_bamako_events = df_impact[df_impact['ADM2'] == capitalize(admin_unit)]
-        print (df_impact_bamako_events.head)
+
         # Convert start and end times to datetime for filtering
         start_time = pd.to_datetime(start_time, format="%Y-%m-%d")
         end_time = pd.to_datetime(end_time, format="%Y-%m-%d")
         # Filter observed and predicted discharge for the time range
         df_obs = df_obs.loc[(df_obs.index >= start_time) & (df_obs.index <= end_time)]
         df_glofas = df_glofas.loc[(df_glofas.index >= start_time) & (df_glofas.index <= end_time)]
-        
+        df_gfh = df_gfh.loc[(df_gfh.index>=start_time) & (df_gfh.index <= end_time)]
         # Plot the data
-        plt.figure(figsize=(12, 6))
+        plt.figure(figsize=(10, 6))
 
         # Plot observed discharge
-        plt.plot(df_obs.index, df_obs['Value'], label='Observed Discharge', color='blue', linewidth=1)
+        plt.plot(df_obs.index, df_obs['Value'], label='Observed discharge', color=self.colors[0], linewidth=1)
 
         # Plot predicted discharge
-        plt.plot(df_glofas.index, df_glofas['percentile_40.0'], label=f'Predicted discharge by GloFAS with leadtime of {leadtime} hours', color='green', linestyle='-', linewidth=1)
-        plt.axhline(threshold_obs, color='blue', linestyle=':', linewidth=2, label=f'{return_period}-year Return Period of observational data')
-        plt.axhline(threshold_glofas, color='green', linestyle=':', linewidth=2, label=f'{return_period}-year Return Period of GloFAS data ')
+        plt.plot(df_glofas.index, df_glofas['percentile_40.0'], label=f'Predicted discharge by GloFAS with leadtime of {leadtime} hours', color=self.colors[1], linestyle='-', linewidth=1)
+        plt.plot(df_gfh.index, df_gfh[f'{leadtime/24:.0f} days'], label=f'Predicted discharge by Google Flood Hub with leadtime of {leadtime} hours', color=self.colors[2], linestyle='-', linewidth=1)
+        plt.axhline(threshold_obs, color=self.colors[0], linestyle=':', linewidth=2, label=f'{return_period}-year return period of observational data')
+        plt.axhline(threshold_glofas, color=self.colors[1], linestyle=':', linewidth=2, label=f'{return_period}-year return period of GloFAS data ')
+        plt.axhline(threshold_gfh, color=self.colors[2], linestyle=':', linewidth=2, label=f'{return_period}-year return period of GFH data ')
 
 
         # Add impact events as translucent red blocks with a single legend entry
@@ -319,8 +322,8 @@ class Visualizer:
             start = pd.to_datetime(row['Start Date'])
             end = pd.to_datetime(row['End Date'])
             if start >= start_time and end <= end_time:  # Only include events within the specified time range
-                label = 'Impact Event' if not legend_shown else ""
-                plt.axvspan(start, end, color='red', alpha=0.3, label=label)
+                label = 'Impact event documented in administrative unit' if not legend_shown else ""
+                plt.axvspan(start, end, color='maroon', alpha=0.6, label=label)
                 legend_shown = True
         # Add horizontal line for threshold (e.g., 5-year return period)
 
@@ -328,50 +331,71 @@ class Visualizer:
         plt.title(f'Discharge at station {stationname} and impact events in {admin_unit}')
         plt.xlabel('Date')
         plt.ylabel('Discharge (m³/s)')
-        plt.legend(loc='lower left')
-        #plt.grid(True)
+            # Position legend outside the plot
+        plt.legend(loc='upper left', bbox_to_anchor=(0.0, -0.15), borderaxespad=0.)
         plt.tight_layout()
-        
+
+        file_path = f'{self.DataDir}/comparison/results/discharge_in{stationname}_timeseries_RP{return_period}_leadtime{leadtime}.png'
+        plt.savefig(file_path)
         # Show plot
         plt.show()
 if __name__ =='__main__': 
     vis = Visualizer(cfg.DataDir, cfg.admPath, cfg.leadtimes, cfg.RPsyr, cfg.percentiles)
-    comparisonType = 'Impact'
-    model = 'GoogleFloodHub'
-    for RPyr in cfg.RPsyr: 
-        for leadtime in cfg.leadtimes: 
-            scores_path = f"{cfg.DataDir}/{model}/{comparisonType}/GFH_vs_IMPACT_{leadtime:.0f}lt_{RPyr:.1f}rp.geojson"
-            scores_by_commune_gdf = checkVectorFormat(scores_path)
-            vis.map_pod_far (scores_by_commune_gdf, RPyr, leadtime, comparisonType, model)
-    # BasinName = 'Niger'
-    # StationName = 'Bamako'
-    # CorrespondingAdminUnit = 'Bamako'
+    # comparisonType = 'Impact'
+    # model = 'GoogleFloodHub'
+    # for RPyr in cfg.RPsyr: 
+    #     for leadtime in cfg.leadtimes: 
+    #         scores_path = f"{cfg.DataDir}/{model}/{comparisonType}/GFH_vs_IMPACT_{leadtime:.0f}lt_{RPyr:.1f}rp.geojson"
+    #         scores_by_commune_gdf = checkVectorFormat(scores_path)
+    #         vis.map_pod_far (scores_by_commune_gdf, RPyr, leadtime, comparisonType, model)
+    BasinName = 'Niger'
+    StationName = 'Bamako'
+    CorrespondingAdminUnit = 'Bamako'
     
-    # leadtime = 168
-    # return_period = 2 # year 
-    # df_obs = transform_hydro(f"{cfg.DataDir}/DNHMali_2019/Q_stations/{BasinName}_{StationName}.csv",cfg.startYear, cfg.endYear)
-    # df_glofas = pd.read_csv (f"{cfg.stationsDir}/GloFAS_Q/timeseries/discharge_timeseries_{StationName}_{leadtime}.csv",
-    #                             )
-    # df_glofas['ValidTime'] = pd.to_datetime(df_glofas["ValidTime"], format="%Y-%m-%d")
-    # # Check for any invalid dates
-    # if df_glofas['ValidTime'].isnull().any():
-    #     print("Warning: Some dates in 'date_col' could not be parsed and are set to NaT.")
-    # # Set the index to the datetime column
-    # df_glofas.set_index('ValidTime', inplace=True)
-    # df_glofas.sort_index(inplace=True)
-    # df_impact = pd.read_csv (cfg.impact_csvPath, delimiter=';', header=0)
-    # RP_glofas = Q_Gumbel_fit_RP(df_glofas, return_period, 'percentile_40.0')
-    # RP_obs = Q_Gumbel_fit_RP (df_obs, return_period, 'Value')
-    # 
-    # vis.plot_flood_and_impact_events(df_glofas, 
-    #                                     df_impact, 
-    #                                     df_obs, 
-    #                                     StationName,
-    #                                     CorrespondingAdminUnit, 
-    #                                     leadtime,
-    #                                     return_period,
-    #                                     '2004-07-01', 
-    #                                     '2019-01-01', RP_glofas, RP_obs)
+    leadtime = 168
+    return_period = 5 # year 
+    df_obs = transform_hydro(f"{cfg.DataDir}/DNHMali_2019/Q_stations/{BasinName}_{StationName}.csv",cfg.startYear, cfg.endYear)
+    df_glofas = pd.read_csv (f"{cfg.stationsDir}/GloFAS_Q/timeseries/discharge_timeseries_{StationName}_{leadtime}.csv")
+    df_gfh = pd.read_csv (f"{cfg.DataDir}/GoogleFloodHub/timeseries/Bamako_streamflow.csv")
+
+    df_gfh ['ValidTime'] = pd.to_datetime(df_gfh["issue_time"], format="%Y-%m-%d") + timedelta(days=leadtime/24)
+
+
+    df_glofas['ValidTime'] = pd.to_datetime(df_glofas["ValidTime"], format="%Y-%m-%d")
+
+    # Check for any invalid dates
+    if df_glofas['ValidTime'].isnull().any():
+        print("Warning: Some dates in 'date_col' ofglofas could not be parsed and are set to NaT.")
+    if df_gfh['ValidTime'].isnull().any():
+        print("Warning: Some dates in 'date_col' of gfh could not be parsed and are set to NaT.")
+    # Set the index to the datetime column
+    df_glofas.set_index('ValidTime', inplace=True)
+    df_glofas.sort_index(inplace=True)
+
+    df_gfh.set_index('ValidTime', inplace=True)
+    df_gfh.sort_index(inplace=True)
+
+    df_impact = pd.read_csv (cfg.impact_csvPath, delimiter=';', header=0)
+    RP_gfh = Q_Gumbel_fit_RP (df_gfh, return_period, f'{leadtime/24:.0f} days')
+
+    RP_glofas = Q_Gumbel_fit_RP(df_glofas, return_period, 'percentile_40.0')
+
+
+    RP_obs = Q_Gumbel_fit_RP (df_obs, return_period, 'Value')
+    
+    vis.plot_flood_and_impact_events(df_glofas,
+                                        df_gfh, 
+                                        df_impact, 
+                                        df_obs, 
+                                        StationName,
+                                        CorrespondingAdminUnit, 
+                                        leadtime,
+                                        return_period,
+                                        '2016-07-01', 
+                                        '2019-01-01', 
+                                        RP_glofas, 
+                                        RP_gfh,
+                                        RP_obs)
     comparisonTypes = ['Observation']
     models = ['GloFAS', 'PTM']
     # for model in models: 
@@ -385,16 +409,16 @@ if __name__ =='__main__':
     #                 except:
     #                     print (f'No path for leadtime: {leadtime}, RP: {RPyr}, {comparisonType}, for model: {model}') 
     #                     continue
-    station_names = [ 'GUELELINKORO','BAMAKO', 'BANANKORO', 'KOULIKORO','MOPTI', 'DIRE', 'ANSONGO', 'GAO', 'SOFARA', 'DOUNA', 'BOUGOUNI', 'PANKOUROU','BAFING MAKANA', 'KAYES']
-    #admin_units = [''][#['BLA', 'SAN','KIDAL', 'TOMINIAN', 'KANGABA', 'KOULIKORO', 'KOLONDIEBA', 'MOPTI', 'BAMAKO', 'SIKASSO', 'SEGOU', 'KATI']
-    for leadtime in cfg.leadtimes:
-        vis.performance_metrics(station_names, spatial_unit_type='StationNames', x_axis='percentile', standard_value=leadtime, threshold_type='percentiles')
-        vis.performance_metrics(station_names, spatial_unit_type='StationNames', x_axis='return_period', standard_value=leadtime, threshold_type='return_periods')
-    for RPyr in cfg.RPsyr:
-        vis.performance_metrics (station_names, spatial_unit_type='StationNames', x_axis='leadtime', standard_value=RPyr)
-    for percentile in cfg.percentiles: 
-        vis.performance_metrics (station_names, spatial_unit_type='StationNames', x_axis='leadtime', standard_value=percentile, threshold_type='percentiles')
-    # for admin_unit in admin_units:
+    # station_names = [ 'GUELELINKORO','BAMAKO', 'BANANKORO', 'KOULIKORO','MOPTI', 'DIRE', 'ANSONGO', 'GAO', 'SOFARA', 'DOUNA', 'BOUGOUNI', 'PANKOUROU','BAFING MAKANA', 'KAYES']
+    # #admin_units = [''][#['BLA', 'SAN','KIDAL', 'TOMINIAN', 'KANGABA', 'KOULIKORO', 'KOLONDIEBA', 'MOPTI', 'BAMAKO', 'SIKASSO', 'SEGOU', 'KATI']
+    # for leadtime in cfg.leadtimes:
+    #     vis.performance_metrics(station_names, spatial_unit_type='StationNames', x_axis='percentile', standard_value=leadtime, threshold_type='percentiles')
+    #     vis.performance_metrics(station_names, spatial_unit_type='StationNames', x_axis='return_period', standard_value=leadtime, threshold_type='return_periods')
+    # for RPyr in cfg.RPsyr:
+    #     vis.performance_metrics (station_names, spatial_unit_type='StationNames', x_axis='leadtime', standard_value=RPyr)
+    # for percentile in cfg.percentiles: 
+    #     vis.performance_metrics (station_names, spatial_unit_type='StationNames', x_axis='leadtime', standard_value=percentile, threshold_type='percentiles')
+    # # for admin_unit in admin_units:
     #     data = collect_performance_measures(admin_unit, cfg.DataDir, cfg.leadtimes, cfg.RPsyr)
     #     for leadtime in cfg.leadtimes: 
     #         for RPyr in cfg.RPsyr:
