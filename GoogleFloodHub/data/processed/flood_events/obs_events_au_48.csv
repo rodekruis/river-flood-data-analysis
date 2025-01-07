@@ -1,0 +1,49 @@
+event_ID;index;identifier;flood_start;flood_end;duration
+Bafing Makana_0;0;Bafing Makana;2016-07-06;2016-07-18;13
+Bafing Makana_1;1;Bafing Makana;2016-11-19;2016-11-28;10
+Bafing Makana_2;2;Bafing Makana;2017-07-02;2017-07-03;2
+Bafing Makana_3;3;Bafing Makana;2017-07-08;2017-07-09;2
+Bafing Makana_4;4;Bafing Makana;2017-10-21;2017-11-02;13
+Bafing Makana_5;5;Bafing Makana;2018-07-05;2018-07-06;2
+Bafing Makana_6;6;Bafing Makana;2018-07-12;2018-07-14;3
+Bafing Makana_7;7;Bafing Makana;2018-07-17;2018-07-19;3
+Bafing Makana_8;8;Bafing Makana;2018-11-08;2018-11-23;16
+Bamako_0;0;Bamako;2016-08-16;2016-10-16;62
+Bamako_1;1;Bamako;2017-09-12;2017-09-14;3
+Bamako_2;2;Bamako;2017-10-03;2017-10-05;3
+Bamako_3;3;Bamako;2018-08-15;2018-10-24;71
+Banankoro_0;0;Banankoro;2016-08-11;2016-08-16;6
+Banankoro_1;1;Banankoro;2016-08-18;2016-08-22;5
+Banankoro_2;2;Banankoro;2016-08-24;2016-10-15;53
+Banankoro_3;3;Banankoro;2017-08-27;2017-09-19;24
+Banankoro_4;4;Banankoro;2017-09-24;2017-09-26;3
+Banankoro_5;5;Banankoro;2017-09-29;2017-10-04;6
+Banankoro_6;6;Banankoro;2018-08-16;2018-10-25;71
+Bougouni_0;0;Bougouni;2016-07-28;2016-10-12;77
+Bougouni_1;1;Bougouni;2017-08-26;2017-09-12;18
+Bougouni_2;2;Bougouni;2018-07-27;2018-08-13;18
+Bougouni_3;3;Bougouni;2018-08-17;2018-08-18;2
+Bougouni_4;4;Bougouni;2018-08-24;2018-10-26;64
+Douna_0;0;Douna;2016-08-11;2016-10-15;66
+Douna_1;1;Douna;2018-08-22;2018-10-31;71
+Kayes_0;0;Kayes;2016-07-25;2016-07-29;5
+Kayes_1;1;Kayes;2016-07-31;2016-08-02;3
+Kayes_2;2;Kayes;2016-08-12;2016-08-14;3
+Kayes_3;3;Kayes;2016-08-17;2016-08-30;14
+Kayes_4;4;Kayes;2016-09-02;2016-10-13;42
+Kayes_5;5;Kayes;2017-08-26;2017-08-29;4
+Kayes_6;6;Kayes;2017-09-13;2017-09-14;2
+Kayes_7;7;Kayes;2018-07-10;2018-07-11;2
+Kayes_8;8;Kayes;2018-08-07;2018-10-05;60
+Koulikoro_0;0;Koulikoro;2016-08-19;2016-10-14;57
+Koulikoro_1;1;Koulikoro;2017-09-15;2017-09-18;4
+Koulikoro_2;2;Koulikoro;2018-08-19;2018-10-24;67
+Mopti_0;0;Mopti;2016-08-24;2016-11-09;78
+Mopti_1;1;Mopti;2018-08-30;2018-11-23;86
+Pankourou_0;0;Pankourou;2016-08-02;2016-10-24;84
+Pankourou_1;1;Pankourou;2017-08-25;2017-09-19;26
+Pankourou_2;2;Pankourou;2017-10-02;2017-10-14;13
+Pankourou_3;3;Pankourou;2018-08-01;2018-09-11;42
+Sofara_0;0;Sofara;2016-08-05;2016-11-08;96
+Sofara_1;1;Sofara;2017-08-14;2017-09-27;45
+Sofara_2;2;Sofara;2018-08-11;2018-11-21;103
