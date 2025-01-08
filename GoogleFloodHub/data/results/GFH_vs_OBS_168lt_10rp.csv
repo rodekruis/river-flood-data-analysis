@@ -1,5 +1,5 @@
 ,identifier,TP,FP,FN,POD,FAR,precision,recall,f1
-0,Bamako,0,0,1,0.0,0.0,0.0,0.0,0.0
+0,Bamako,0,0,1,0.0,,0.0,0.0,0.0
 1,Bougouni,1,0,0,1.0,0.0,1.0,1.0,1.0
 2,Douna,1,0,0,1.0,0.0,1.0,1.0,1.0
 3,Pankourou,1,0,1,0.5,0.0,1.0,0.5,0.667
