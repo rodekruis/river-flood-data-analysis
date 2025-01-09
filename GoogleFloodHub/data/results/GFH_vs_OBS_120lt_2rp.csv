@@ -1,6 +1,6 @@
 ,identifier,TP,FP,FN,POD,FAR,precision,recall,f1
 0,Ansongo,2,1,1,0.667,0.333,0.667,0.667,0.667
-1,Bafing Makana,0,0,1,0.0,,0.0,0.0,0.0
+1,Bafing Makana,0,0,1,0.0,,,0.0,
 2,Bamako,2,0,2,0.5,0.0,1.0,0.5,0.667
 3,Banankoro,2,0,2,0.5,0.0,1.0,0.5,0.667
 4,Bougouni,4,0,0,1.0,0.0,1.0,1.0,1.0
