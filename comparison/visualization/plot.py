@@ -268,13 +268,17 @@ class Visualizer:
         plt.show()
 if __name__ =='__main__': 
     vis = Visualizer(cfg.DataDir, cfg.admPath, cfg.leadtimes, cfg.RPsyr, cfg.percentiles)
-    # # comparisonType = 'Impact'
-    # # model = 'GoogleFloodHub'
-    # # for RPyr in cfg.RPsyr: 
-    # #     for leadtime in cfg.leadtimes: 
-    # #         scores_path = f"{cfg.DataDir}/{model}/{comparisonType}/GFH_vs_IMPACT_{leadtime:.0f}lt_{RPyr:.1f}rp.geojson"
-    # #         scores_by_commune_gdf = checkVectorFormat(scores_path)
-    # #         vis.map_pod_far (scores_by_commune_gdf, RPyr, leadtime, comparisonType, model)
+    comparisonType = 'Impact'
+    model = 'GoogleFloodHub'
+    for RPyr in cfg.RPsyr: 
+        for leadtime in cfg.leadtimes: 
+            if RPyr == int (RPyr): 
+                RPyr = int(RPyr)
+            else:
+                RPyr = float(RPyr)
+            scores_path = f"{cfg.DataDir}/{model}/{comparisonType}/GFH_vs_IMPACT_{leadtime:.0f}lt_{RPyr}rp.geojson"
+            scores_by_commune_gdf = checkVectorFormat(scores_path)
+            vis.map_pod_far (scores_by_commune_gdf, RPyr, leadtime, comparisonType, model)
     # BasinName = 'Niger'
     # StationName = 'Bamako'
     # CorrespondingAdminUnit = 'Bamako'
@@ -321,30 +325,30 @@ if __name__ =='__main__':
     #                                     RP_glofas, 
     #                                     RP_gfh,
     #                                     RP_obs)
-    comparisonTypes = ['Impact','Observation']
-    models = ['GloFAS', 'GoogleFloodHub', 'PTM']
-    for model in models: 
-        for comparisonType in comparisonTypes:
-            for leadtime in cfg.leadtimes: 
-                for RPyr in cfg.RPsyr:
-                    try:
-                        scores_path = f"{cfg.DataDir}/{model}/{comparisonType}/scores_byCommuneRP{RPyr:.1f}_yr_leadtime{leadtime:.0f}.gpkg"
-                        scores_by_commune_gdf = checkVectorFormat(scores_path)
-                        vis.map_pod_far(scores_by_commune_gdf, RPyr, leadtime, comparisonType, f'{model}')
-                    except:
-                        print (f'No path for leadtime: {leadtime}, RP: {RPyr}, {comparisonType}, for model: {model}') 
-                        continue
+    # comparisonTypes = ['Impact','Observation']
+    # models = ['GloFAS', 'GoogleFloodHub', 'PTM']
+    # for model in models: 
+    #     for comparisonType in comparisonTypes:
+    #         for leadtime in cfg.leadtimes: 
+    #             for RPyr in cfg.RPsyr:
+    #                 try:
+    #                     scores_path = f"{cfg.DataDir}/{model}/{comparisonType}/scores_byCommuneRP{RPyr:.1f}_yr_leadtime{leadtime:.0f}.gpkg"
+    #                     scores_by_commune_gdf = checkVectorFormat(scores_path)
+    #                     vis.map_pod_far(scores_by_commune_gdf, RPyr, leadtime, comparisonType, f'{model}')
+    #                 except:
+    #                     print (f'No path for leadtime: {leadtime}, RP: {RPyr}, {comparisonType}, for model: {model}') 
+    #                     continue
     # removed gao and ansongo from stations 
     station_names = [ 'BAMAKO', 'BANANKORO', 'KOULIKORO','MOPTI','ANSONGO', 'DIRE', 'SOFARA', 'DOUNA', 'BOUGOUNI', 'PANKOUROU','BAFING MAKANA', 'DIBIYA', 'KAYES']
     # #admin_units = [''][#['BLA', 'SAN','KIDAL', 'TOMINIAN', 'KANGABA', 'KOULIKORO', 'KOLONDIEBA', 'MOPTI', 'BAMAKO', 'SIKASSO', 'SEGOU', 'KATI']
     
-    for leadtime in cfg.leadtimes:
-        vis.performance_metrics(station_names, spatial_unit_type='StationNames', x_axis='percentile', standard_value=leadtime, threshold_type='percentiles')
-        vis.performance_metrics(station_names, spatial_unit_type='StationNames', x_axis='return_period', standard_value=leadtime, threshold_type='return_periods')
-    for RPyr in cfg.RPsyr:
-        vis.performance_metrics (station_names, spatial_unit_type='StationNames', x_axis='leadtime', standard_value=RPyr)
-    for percentile in cfg.percentiles: 
-        vis.performance_metrics (station_names, spatial_unit_type='StationNames', x_axis='leadtime', standard_value=percentile, threshold_type='percentiles')
+    # for leadtime in cfg.leadtimes:
+    #     vis.performance_metrics(station_names, spatial_unit_type='StationNames', x_axis='percentile', standard_value=leadtime, threshold_type='percentiles')
+    #     vis.performance_metrics(station_names, spatial_unit_type='StationNames', x_axis='return_period', standard_value=leadtime, threshold_type='return_periods')
+    # for RPyr in cfg.RPsyr:
+    #     vis.performance_metrics (station_names, spatial_unit_type='StationNames', x_axis='leadtime', standard_value=RPyr)
+    # for percentile in cfg.percentiles: 
+    #     vis.performance_metrics (station_names, spatial_unit_type='StationNames', x_axis='leadtime', standard_value=percentile, threshold_type='percentiles')
 
             
 
