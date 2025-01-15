@@ -11,7 +11,11 @@ import GloFAS.GloFAS_prep.configuration as cfg
 from GloFAS.GloFAS_prep.text_formatter import remove_accents
 import matplotlib.colors as mcolors
 from geopy.distance import geodesic
-
+'''
+Matching of different representations of space (points, fields) to each other. 
+This can be relevant when considering stations that need to be matched to a administrative unit or vice versa
+Or when relating points to points, and then using the closest value to within a radius to find it 
+'''
 def findclosestpoint(point_x, point_y, target_gdf):
     '''
     Finds the closest point in target_gdf to the given coordinates (point_x, point_y).
@@ -57,6 +61,7 @@ def find_corresponding_point_within_box(station_lon, station_lat, ups_area_point
     print("Latitude range in dataset:", glofas_ups_area_xr.latitude.min().values, glofas_ups_area_xr.latitude.max().values)
     print("Longitude range in dataset:", glofas_ups_area_xr.longitude.min().values, glofas_ups_area_xr.longitude.max().values)
 
+    # simplification of translation of metres to degrees 
     degree_buffer = radius_m / 111000  # 1 degree latitude ~ 111 km
     lat_min = station_lat - degree_buffer
     lat_max = station_lat + degree_buffer
@@ -83,15 +88,6 @@ def find_corresponding_point_within_box(station_lon, station_lat, ups_area_point
 
     area_difference = subset - ups_area_point_m
 
-    # plt.figure(figsize=(8, 6))
-    # area_difference.plot()
-    # plt.title(f"Area difference for station, for longitude latitude selection")
-    # plt.xlabel("Longitude")
-    # plt.ylabel("Latitude")
-    # plt.show()
-    #   # Save as file
-    # plt.close() 
-    # Extract the coordinates and values from the subset
     lats = subset["latitude"].values
     lons = subset["longitude"].values
     area = subset.values
@@ -125,10 +121,9 @@ def find_corresponding_point_within_box(station_lon, station_lat, ups_area_point
                 best_point = (lon, lat)
 
     model_point_lon, model_point_lat = best_point
-        ###################################################################
+    ################################################################### plot to visualize, feel free to remove of course
     # Create a new figure
     plt.figure(figsize=(10, 8))
-
     # Plot the data and retrieve colormap and normalization
     plot = (subset / 1e6).plot(
         cmap="viridis",  # Consistent color scheme
@@ -138,7 +133,6 @@ def find_corresponding_point_within_box(station_lon, station_lat, ups_area_point
     norm = mcolors.Normalize(vmin=subset.min().item(), vmax=subset.max().item())  # Normalize based on subset
 
     # Get the color for the station point based on upstream area value
-    
     point_color = cmap(norm(ups_area_point_m))  # Map the value to the colormap
 
     # Overlay the station point
@@ -161,11 +155,6 @@ def find_corresponding_point_within_box(station_lon, station_lat, ups_area_point
         label=f"GloFAS location corresponding to minimal upstream area difference "
         )
     plt.plot ([],[], ' ', label= f'found within {radius_m/1e3:.0f} km radius (difference={best_area_diff/1e6:.1f} km²)')
-    # Add the colorbar
-    # sm = plt.cm.ScalarMappable(cmap=cmap, norm=norm)
-    # sm.set_array([])  # Required for ScalarMappable
-
-    # Add title, labels, and legend
     plt.title(f"Subset for Station: {stationName}")
     plt.xlabel("Longitude")
     plt.ylabel("Latitude")
@@ -173,6 +162,7 @@ def find_corresponding_point_within_box(station_lon, station_lat, ups_area_point
     plt.savefig(f'{cfg.DataDir}/GloFAS_station_for_DNH_{stationName}.png')
     plt.show()
     plt.close()
+
     return model_point_lon, model_point_lat, best_area_diff
 
 
@@ -186,23 +176,24 @@ def matchPoints(
             crs='EPSG:4326', 
             StationDataDir=Path.cwd()
             ):
+            
     '''
     Matches each point in vector_original with the closest point in vector2, and optionally vector3.
     
     Parameters:
     vector_original : str or GeoDataFrame
         The original vector data (file path or GeoDataFrame) containing the source points.
-    ID1 : str
+    ID1: str
         Column name in vector_original identifying the points.
     vector2 : str or GeoDataFrame
         The target vector data (file path or GeoDataFrame) containing points to match with.
-    ID2 : str
+    ID2: str
         Column name in vector2 identifying the points.
     vector3 : str or GeoDataFrame, optional
         An additional vector data source for matching (optional).
-    ID3 : str, optional
+    ID3: str, optional
         Column name in vector3 identifying the points (optional).
-    crs : str, optional
+    crs: str, optional
         Coordinate reference system for all data. Defaults to 'EPSG:4326'.
     StationDataDir: str or Path, optional 
         Datadirectory describing where to write the stationdirectory to, default is root

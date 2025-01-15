@@ -25,7 +25,7 @@ class FloodProbabilityProcessor:
                 start_date=None, 
                 end_date=None, 
                 nrCores=4, 
-                comparisonShape='polygon',
+                comparisonShape='polygon', # for impact data, for observational data use 'point'
                 ):
                 
         # start and end_date are only necessary if your forecastType is not 'reforecast' but 'forecast'

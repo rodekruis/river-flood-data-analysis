@@ -16,11 +16,42 @@ The repository contains four main folders:
 
 ## Data
 
-Multiple data sources were utilised. ...
-
+Multiple data sources were utilised. 
+### GloFAS: 
+retrieved from the early warning data system of copernicus https://ewds.climate.copernicus.eu/ 
+The folder GloFAS_data_extractor contains information for extraction of these different datasets
+(this is also initialized in the probability calculator, just make sure your folder structure follows a similar structure as in the probability_calculator.py)
+### Impact data
 Impact data is not stored online and can be shared upon requested, either through the contact persona above, or through [pphung@redcross.nl](mailto:pphung@redcross.nl).
 
-## Set-up
+### Observation data 
+source: DNH, not publicly available. 
 
-...
+## Preparation of data 
+### GloFAS: 
+#### comparison to observational data: 
+for comparison to observational data or needing any timeseries of a single cell, run Q_timeseries_station.py 
+#### comparison to impact data: 
+this is initialized in the probability calculator
 
+## Analysis 
+### GloFAS 
+run and inspect scriptsi in the following order
+1. probability_calculator.py
+2. flood_definer.py 
+3. performance_calculator.py
+
+
+scripts accommodate differences in: (and therefore need information on these variables)
+- area of interest 
+- leadtimes 
+- trigger probability 
+- threshold type (return period or percentiles)
+- threshold value 
+- comparison type (observational or impact data) 
+- timerange 
+
+Data is also retrieved in probability_calculator (though you need to run 'Q_timeseries_station.py' for comparison to obs data seperately) 
+
+## Post processing 
+in the comparison folder - visualization folder, visualizations are suggested in the plot.py, which contains a visualization class 
