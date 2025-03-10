@@ -4,6 +4,9 @@ __pycache__/
 # ignore API keys
 key.txt
 
+# ignore observation data
+comparison/observation/data/
+
 # ignore Google data
 *.nc
 
@@ -28,3 +31,4 @@ Hydrological_Models_API.ipynb
 GRRR_Google_Runoff_Reanalysis_&_Reforecast.ipynb
 preprocess_impact_data.py
 calculate_RPs.py
+
