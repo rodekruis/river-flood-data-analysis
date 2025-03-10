@@ -224,24 +224,40 @@ class PredictedToImpactPerformanceAnalyzer:
         #NO YEAR IMPACT? --> no checking : this is the piece of code: DONT DO THIS FOR OBSERVATIONAL DATA 
         if self.comparisonType == 'Impact':
             for year in self.years:
-                # Convert year to date range for that year
+                start_dry_season = pd.to_datetime(f'{year}-03-01')
+                end_dry_season = pd.to_datetime(f'{year}-05-31')
+
+                # Remove rows that fall within the dry season
+                # impact data
+                self.impact_gdf = self.impact_gdf[~(
+                    (self.impact_gdf['Start Date'] >= start_dry_season) & 
+                    (self.impact_gdf['End Date'] <= end_dry_season)
+                )]
+                # nonmatched model prediction events
+                PredictedEvents_gdf = PredictedEvents_gdf[~(
+                    (PredictedEvents_gdf['Start Date'] >= start_dry_season) & 
+                    (PredictedEvents_gdf['End Date'] <= end_dry_season)
+                )]
+
+                # general removal of missing impact data 
                 start_of_year = pd.to_datetime(f'{year}-01-01')
                 end_of_year = pd.to_datetime(f'{year}-12-31')
 
                 # Find communes that recorded an impact in the given year
                 recorded_impacts = self.impact_gdf[
-                    (self.impact_gdf['Start Date'] >= start_of_year) &
+                    (self.impact_gdf['Start Date'] >= start_of_year) & 
                     (self.impact_gdf['End Date'] <= end_of_year)
-                    ][self.spatial_unit].unique()
+                ][self.spatial_unit].unique()
 
-                # Remove rows in GloFAS where no impact was recorded for that commune in that year
-                PredictedEvents_gdf = PredictedEvents_gdf[
-                    ~(
-                        (PredictedEvents_gdf['Start Date'] >= start_of_year) &
-                        (PredictedEvents_gdf['End Date'] <= end_of_year) &
-                        (~PredictedEvents_gdf[self.spatial_unit].isin(recorded_impacts))
-                    )]
+                # Keep only rows in PredictedEvents_gdf where an impact was recorded for that commune
+                PredictedEvents_gdf = PredictedEvents_gdf[~(
+                    (PredictedEvents_gdf['Start Date'] >= start_of_year) & 
+                    (PredictedEvents_gdf['End Date'] <= end_of_year) & 
+                    (~PredictedEvents_gdf[self.spatial_unit].isin(recorded_impacts))
+                )]
+                
 
+                
         # Prepare the remaining rows to be added to impact_gdf
         remaining_rows = PredictedEvents_gdf.copy()
 
