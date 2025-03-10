@@ -54,10 +54,12 @@ class PredictedToImpactPerformanceAnalyzer:
         self.endYear = endYear
         self.years = years
         self.actionLifetime = actionLifetime
-        self.comparisonType = comparisonType # Observation vs Impact
+
         self.impactData = impactData
         self.model = model
         self.leadtime = leadtime
+
+        self.comparisonType = comparisonType # Observation vs Impact
         self.comparisonDir = Path(f'{self.DataDir}/{self.model}/{comparisonType}')
         self.comparisonDir.mkdir (parents=True, exist_ok=True)
         if comparisonType == 'Impact':
@@ -67,7 +69,6 @@ class PredictedToImpactPerformanceAnalyzer:
             #rename shapefile and make capital
             self.gdf_shape.rename(columns={f'{self.spatial_unit}_FR':f'{self.spatial_unit}'}, inplace=True)
             self.gdf_shape[f'{self.spatial_unit}'] = self.gdf_shape[f'{self.spatial_unit}'].apply(lambda x: unidecode.unidecode(x).upper())
-            
         elif comparisonType == 'Observation':
             self.spatial_unit = f'StationName'
             self.gdf_shape = checkVectorFormat (stationcoordinates, shapeType='point')
@@ -220,25 +221,26 @@ class PredictedToImpactPerformanceAnalyzer:
          # Keep entries from the original GloFASCommune_gdf where there was not yet a match
         PredictedEvents_gdf = PredictedEvents_gdf[PredictedEvents_gdf['Remove'] != 1] # remove was a 1, so we must keep everything that is not 1
         
-        #NO YEAR IMPACT? --> no checking : this is the piece of code:
-        for year in self.years:
-            # Convert year to date range for that year
-            start_of_year = pd.to_datetime(f'{year}-01-01')
-            end_of_year = pd.to_datetime(f'{year}-12-31')
+        #NO YEAR IMPACT? --> no checking : this is the piece of code: DONT DO THIS FOR OBSERVATIONAL DATA 
+        if self.comparisonType == 'Impact':
+            for year in self.years:
+                # Convert year to date range for that year
+                start_of_year = pd.to_datetime(f'{year}-01-01')
+                end_of_year = pd.to_datetime(f'{year}-12-31')
 
-            # Find communes that recorded an impact in the given year
-            recorded_impacts = self.impact_gdf[
-                (self.impact_gdf['Start Date'] >= start_of_year) &
-                (self.impact_gdf['End Date'] <= end_of_year)
-                ][self.spatial_unit].unique()
+                # Find communes that recorded an impact in the given year
+                recorded_impacts = self.impact_gdf[
+                    (self.impact_gdf['Start Date'] >= start_of_year) &
+                    (self.impact_gdf['End Date'] <= end_of_year)
+                    ][self.spatial_unit].unique()
 
-            # Remove rows in GloFAS where no impact was recorded for that commune in that year
-            PredictedEvents_gdf = PredictedEvents_gdf[
-                ~(
-                    (PredictedEvents_gdf['Start Date'] >= start_of_year) &
-                    (PredictedEvents_gdf['End Date'] <= end_of_year) &
-                    (~PredictedEvents_gdf[self.spatial_unit].isin(recorded_impacts))
-                )]
+                # Remove rows in GloFAS where no impact was recorded for that commune in that year
+                PredictedEvents_gdf = PredictedEvents_gdf[
+                    ~(
+                        (PredictedEvents_gdf['Start Date'] >= start_of_year) &
+                        (PredictedEvents_gdf['End Date'] <= end_of_year) &
+                        (~PredictedEvents_gdf[self.spatial_unit].isin(recorded_impacts))
+                    )]
 
         # Prepare the remaining rows to be added to impact_gdf
         remaining_rows = PredictedEvents_gdf.copy()

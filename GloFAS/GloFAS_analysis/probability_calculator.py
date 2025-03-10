@@ -26,14 +26,13 @@ class FloodProbabilityProcessor:
                 end_date=None, 
                 nrCores=4, 
                 comparisonShape='polygon', # for impact data, for observational data use 'point'
-                ):
-                
+                ): 
+
         # start and end_date are only necessary if your forecastType is not 'reforecast' but 'forecast'
-        
         self.leadtime = leadtime
         self.DataDir = DataDir
         self.crs = crs
-        self.RPyr =RPyr
+        self.RPyr=RPyr
         self.area =area
         self.lakesPath = cfg.lakesPath
         self.forecastType = forecastType
