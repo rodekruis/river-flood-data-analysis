@@ -140,64 +140,64 @@ def get_dict_ds_per_admin_unit(dict_ds: Dict[str, xr.Dataset]) -> Dict[str, list
     return dict_ds_per_admin_unit
 
 
-def aggregate_per_admin_unit(
-        dict_datasets: Dict[str, xr.Dataset],
-        lead_time: int = 7,
-        method: str = 'max',
-        verbose: bool = True
-    ) -> Dict[str, xr.Dataset]:
-    """
-    Aggregate the data per administrative unit with a method
-    of choice, defaulting to 'max'; more options to be added later.
-    With lead time, the forecast horizon can be subsetted
+# def aggregate_per_admin_unit(
+#         dict_datasets: Dict[str, xr.Dataset],
+#         lead_time: int = 7,
+#         method: str = 'max',
+#         verbose: bool = True
+#     ) -> Dict[str, xr.Dataset]:
+#     """
+#     Aggregate the data per administrative unit with a method
+#     of choice, defaulting to 'max'; more options to be added later.
+#     With lead time, the forecast horizon can be subsetted
 
-    :param dict_datasets: dict of datasets
-    :param lead_time: lead time of the forecast to aggregate
-    :param method: method of aggregation
-    :param verbose: whether to print some test print-s's
-    :return: dict of datasets with aggregated data
-    """
-    # get the datasets per admin unit for aggregation next;
-    # check which admin units did not get any dataset assigned
-    grouped_datasets = get_dict_ds_per_admin_unit(dict_datasets)
-    if verbose:
-        print("[admin unit ID] : list([gauge ID's])")
-        for unit, datasets in grouped_datasets.items():
-            print(unit, end = ' : ')
-            pretty_print_list([ds.attrs['gauge_id'] for ds in datasets])
-        print('\n')
+#     :param dict_datasets: dict of datasets
+#     :param lead_time: lead time of the forecast to aggregate
+#     :param method: method of aggregation
+#     :param verbose: whether to print some test print-s's
+#     :return: dict of datasets with aggregated data
+#     """
+#     # get the datasets per admin unit for aggregation next;
+#     # check which admin units did not get any dataset assigned
+#     grouped_datasets = get_dict_ds_per_admin_unit(dict_datasets)
+#     if verbose:
+#         print("[admin unit ID] : list([gauge ID's])")
+#         for unit, datasets in grouped_datasets.items():
+#             print(unit, end = ' : ')
+#             pretty_print_list([ds.attrs['gauge_id'] for ds in datasets])
+#         print('\n')
 
-    dict_datasets_aggregated = {}
-    # time complexity is O(n), where n is the number of admin units
-    idx = 1
-    for admin_unit, datasets in grouped_datasets.items():
-        if verbose:
-            print(f'aggregating {idx}/{len(grouped_datasets)}: {admin_unit}')
-            idx += 1
+#     dict_datasets_aggregated = {}
+#     # time complexity is O(n), where n is the number of admin units
+#     idx = 1
+#     for admin_unit, datasets in grouped_datasets.items():
+#         if verbose:
+#             print(f'aggregating {idx}/{len(grouped_datasets)}: {admin_unit}')
+#             idx += 1
         
-        # (2) concatenate the datasets into one dataset and add gauge_id dimension;
-        # (3) filter by lead time, discarding the other lead times; (4) assign the
-        # actual dates to the dataset, a.k.a. the date at which the forecast actually
-        # applies to; (5) aggregate the data by 'actual date' and calculate with 'method'
-        ds_combined = xr.concat(datasets, dim = 'gauge_id')
-        ds_combined_subset = subset_lead_time(ds_combined, lead_time)
-        ds_combined_actual_dates = assign_actual_dates_to_dataset(ds_combined_subset)
+#         # (2) concatenate the datasets into one dataset and add gauge_id dimension;
+#         # (3) filter by lead time, discarding the other lead times; (4) assign the
+#         # actual dates to the dataset, a.k.a. the date at which the forecast actually
+#         # applies to; (5) aggregate the data by 'actual date' and calculate with 'method'
+#         ds_combined = xr.concat(datasets, dim = 'gauge_id')
+#         ds_combined_subset = subset_lead_time(ds_combined, lead_time)
+#         ds_combined_actual_dates = assign_actual_dates_to_dataset(ds_combined_subset)
         
-        if method == 'max':
-            ds_aggregated = \
-                ds_combined_actual_dates.groupby('actual_date').max(dim = 'gauge_id')
-        elif method == 'mean':
-            ds_aggregated = \
-                ds_combined_actual_dates.groupby('actual_date').mean(dim = 'gauge_id')
-        else:
-            raise ValueError('Method parameter not recognised')
+#         if method == 'max':
+#             ds_aggregated = \
+#                 ds_combined_actual_dates.groupby('actual_date').max(dim = 'gauge_id')
+#         elif method == 'mean':
+#             ds_aggregated = \
+#                 ds_combined_actual_dates.groupby('actual_date').mean(dim = 'gauge_id')
+#         else:
+#             raise ValueError('Method parameter not recognised')
 
-        # lastly, we update the attributes of the dataset of the admin unit,
-        # since now we're up a level from gauges to units, asking for a replacement
-        # of the attributes: we drop longitude, latitude, gauge_id, and admin_unit,
-        # and add the admin_unit and the gauge_id's of the gauges in the unit
-        ds_aggregated.attrs = {'admin_unit': admin_unit,
-                               'gauge_ids': [ds.attrs['gauge_id'] for ds in datasets]}
-        dict_datasets_aggregated[admin_unit] = ds_aggregated
+#         # lastly, we update the attributes of the dataset of the admin unit,
+#         # since now we're up a level from gauges to units, asking for a replacement
+#         # of the attributes: we drop longitude, latitude, gauge_id, and admin_unit,
+#         # and add the admin_unit and the gauge_id's of the gauges in the unit
+#         ds_aggregated.attrs = {'admin_unit': admin_unit,
+#                                'gauge_ids': [ds.attrs['gauge_id'] for ds in datasets]}
+#         dict_datasets_aggregated[admin_unit] = ds_aggregated
     
-    return dict_datasets_aggregated
+#     return dict_datasets_aggregated
