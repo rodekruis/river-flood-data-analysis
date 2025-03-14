@@ -7,8 +7,9 @@ key.txt
 # ignore observation data
 comparison/observation/data/
 
-# ignore Google data
+# ignore NetCDF data
 *.nc
+gauge_data.zip
 
 # ignore certain .csv files
 impact_data_Mali.csv
