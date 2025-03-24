@@ -487,3 +487,92 @@ def plot_reanalysis(start_date: str, end_date: str,
     add_return_periods(ax, ds_return_periods, thresholds)
     plt.legend(loc = 'upper right')
     plt.show()
+
+
+def add_RPs_to_plot(
+        ax: mpl.axes, ds: xr.Dataset, thr: Tuple[int], set_legend: bool = True
+    ) -> None:
+    """
+    Adds horizontal lines with return periods to a plot
+
+    :param ax: axis to add the return periods to
+    :param ds: dataset with attributes for the return periods
+    :param thr: list of thresholds to add return periods for
+    """
+    colors = ['yellow', 'orange', 'red', 'brown', 'black']
+    ys = [ds.attrs[f'RP_{threshold}'].item() for threshold in thr]
+
+    # if there is only one colour, set it to orange
+    # add legend, make a legend with a line 
+    for threshold, y, color in zip(thr, ys, colors):
+        ax.axhline(
+            y = y,
+            color = color if len(thr) > 1 else 'orange',
+            label = f'{threshold}-yr return period' if set_legend else None,
+            linestyle = '--'
+        )
+    if set_legend:
+        ax.legend(loc = 'upper right')
+
+        
+def plot_aggregated_reforecast(
+        issue_time_start_date: str, issue_time_end_date: str,
+        l_ds_gauges: List[xr.Dataset],
+        ds_au: xr.Dataset,
+        thresholds: Tuple[int] = (2, 5, 20)
+    ) -> None:
+    """ 
+    Plots the gauges in an administrative unit and the aggregated data
+    for that same administrative unit, showing if the aggregation process
+    was processed correctly. (In contrast to plot_reforecast(), this function
+    does not plot distinct lead times, since they're already filtered out
+    in the aggregation process.)
+
+    :param issue_time_start_date: start date for the issue time
+    :param issue_time_end_date: end date for the issue time
+    :param l_ds_gauges: list of xarray datasets for individual gauges
+    :param ds_au: aggregated xarray dataset for the admin unit
+    :param thresholds: tuple with the thresholds for the return periods
+    """
+    fig, ax = plt.subplots(figsize = (20, 4))
+    
+    # plot individual gauges in the administrative unit
+    for ds in l_ds_gauges:
+        # for the gauge datasets, we still need to subset the lead time
+        ds_7_day = ds.sel(lead_time = pd.Timedelta(days = 7))
+        issue_time_slice = ds_7_day.sel(issue_time = \
+                            slice(issue_time_start_date, issue_time_end_date))
+        ax.plot(
+            pd.to_datetime(issue_time_slice['issue_time'].values),
+            issue_time_slice['streamflow'].values,
+            alpha = 0.5,        # make the lines little bit transparent
+            label = f'gauge {ds_7_day.attrs["gauge_id"]}'
+        )
+    
+    # plot the aggregated timeseries (usually the maximum)
+    ds_aggregated_slice = ds_au.sel(issue_time = \
+                            slice(issue_time_start_date, issue_time_end_date))
+    ax.plot(
+        pd.to_datetime(ds_aggregated_slice['issue_time'].values),
+        ds_aggregated_slice['streamflow'].values,
+        color = '#092448',
+        linewidth = 2,
+        label = 'aggregated',
+        zorder = 3              # make sure the aggregated data is on top
+    )
+    
+    # # add the return periods for all gauges in the admin unit,
+    # # only add the legend for the return periods once
+    # set_legend = True
+    # for gauge_ID in ds_au.attrs['gauge_ids']:
+    #     print(gauge_ID)
+    #     # Here, I'd need the dict_datasets attributes for the RPs, but let's forget them for now.
+    #     add_RPs_to_plot(ax, ds, thresholds, set_legend)
+    #     set_legend = False
+        
+    # set title, labels
+    ax.set_title(f'aggregated forecast')
+    ax.set_xlabel('issue time')
+    ax.set_ylabel(r'streamflow ($\mathrm{m}^3/\mathrm{s}$)')
+    # plt.legend(loc = 'upper right')
+    plt.show()

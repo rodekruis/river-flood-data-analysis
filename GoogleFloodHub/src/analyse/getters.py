@@ -2,9 +2,11 @@
 
 from .transform import convert_country_code_to_iso_a3
 
+from typing import Dict, List, Tuple
 import datetime
 import pandas as pd
 import geopandas as gpd
+import xarray as xr
 
 
 def import_ListGauges_data(country: str, unverified = False) -> pd.DataFrame:
@@ -169,3 +171,76 @@ def get_severity_levels(df: pd.DataFrame, hybas: str) -> dict:
         'five_year': five_year,
         'twenty_year': twenty_year
     }
+
+
+def get_country_gauge_coords(country: str) -> pd.DataFrame:
+    """
+    Get the coordinates of the gauges in a country, stored in data/ folder
+
+    :param country: name of the country
+    :return: DataFrame with the gaugeId, latitude and longitude
+    """
+    if country[0].islower():
+        country = country.capitalize()
+    return pd.read_csv(f'../data/processed/gauge_coords/{country}_gauge_coords.csv',
+                       index_col = None, sep = ';', decimal = '.')
+
+
+def get_datasets_unit_with_most_gauges(
+        dict_ds_agg: Dict[str, xr.Dataset],
+        dict_ds: Dict[str, xr.Dataset]
+    ) -> Tuple[List[xr.Dataset], str]:
+    """
+    Finds the administrative unit with the most gauges and returns 
+    the gauge datasets belonging to that unit in a list, taken from
+    the non-aggregated dictionary of datasets
+
+    :param dict_ds_agg: dict with the datasets
+    :param dict_ds: dict with the datasets
+    :return: list with the datasets of the admin unit with most gauges and unit name
+    """
+    most_common_admin_unit = \
+        max(dict_ds_agg.keys(), key = lambda k: len(dict_ds_agg[k].attrs['gauge_ids']))
+    
+    datasets_for_admin_unit = [
+        ds for ds in dict_ds.values() if most_common_admin_unit in ds.attrs['admin_unit']
+    ]
+
+    return datasets_for_admin_unit, most_common_admin_unit
+
+
+def get_datasets_for_xth_admin_unit(
+        dict_ds_agg: Dict[str, xr.Dataset],
+        dict_ds: Dict[str, xr.Dataset],
+        x: int
+    ) -> Tuple[List[xr.Dataset], str]:
+    """
+    Finds the administrative unit with the xth most gauges and returns 
+    the gauge datasets belonging to that unit in a list, taken from
+    the non-aggregated dictionary of datasets
+
+    :param dict_ds_agg: dict with the datasets
+    :param dict_ds: dict with the datasets
+    :param x: the xth admin unit to get the datasets for
+    :return: list with the datasets of the admin unit with most gauges and unit name
+    """
+    aus_sorted = sorted(dict_ds_agg.keys(),
+                        key = lambda k: len(dict_ds_agg[k].attrs['gauge_ids']), 
+                        reverse = True)
+    if x < 1 or x > len(aus_sorted):
+        raise ValueError(f'x must be between 1 and {len(aus_sorted)}')
+    
+    xth_admin_unit = aus_sorted[x - 1]
+    datasets_for_admin_unit = [
+        ds for ds in dict_ds.values() if xth_admin_unit in ds.attrs['admin_unit']
+    ]
+
+    # for the datasets in datasets_for_admin_unit, see if the
+    # gauge ID's are correct by comparing them to the gauge ID
+    # list in the attributes of the dataset for the admin unit
+    gauge_ids = dict_ds_agg[xth_admin_unit].attrs['gauge_ids']
+    for ds in datasets_for_admin_unit:
+        if ds.attrs['gauge_id'] not in gauge_ids:
+            raise ValueError(f'gauge ID {ds.attrs["gauge_id"]} not in gauge ID list')
+
+    return datasets_for_admin_unit, xth_admin_unit

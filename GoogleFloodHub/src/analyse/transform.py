@@ -2,6 +2,7 @@
 
 from extract import get_json_file
 
+import os
 import datetime
 import pandas as pd
 import geopandas as gpd
@@ -65,4 +66,35 @@ def make_subset_for_gauge_and_issue_time(
     # For plotting purposes, the time can (and must) be normalized
     df['issue_date'] = df['issue_date'].dt.normalize()
 
-    return df[(df['gaugeId'] == gauge) & (df['issue_date'] == issue_date)]  
+    return df[(df['gaugeId'] == gauge) & (df['issue_date'] == issue_date)]
+
+
+def add_shape_data_to_df(df: pd.DataFrame, path: str) -> gpd.GeoDataFrame:
+    """
+    Adds shape data to a DataFrame with admin units
+    """
+    gpd_adm_units = gpd.read_file(path)
+    gpd_adm_units = gpd_adm_units[['ADM2_PCODE', 'ADM2_FR', 'geometry']]
+    df.rename(columns = {'identifier': 'admin_unit'}, inplace = True)
+    gpd_adm_units.rename(columns = {'ADM2_PCODE': 'admin_unit'}, inplace = True)
+    merged_df = pd.merge(df, gpd_adm_units, on = 'admin_unit', how = 'left')
+    merged_gdf = gpd.GeoDataFrame(merged_df, geometry = 'geometry', crs = gpd_adm_units.crs)
+    return merged_gdf
+
+
+def export_all_results_to_geojson(results_folder: str, geojson_folder: str) -> None:
+    """
+    Loop through results, merge with shapefile data, export to geojson
+    """
+    path_shp = '../data/shape_files/mali_ALL/mli_adm_ab_shp/mli_admbnda_adm2_1m_gov_20211220.shp'
+
+    if not os.path.exists(geojson_folder):
+        os.makedirs(geojson_folder)
+
+    for file in os.listdir(results_folder):
+        if file.startswith('GFH_vs_IMPACT'):
+            csv_path = os.path.join(results_folder, file)
+            df = pd.read_csv(csv_path, index_col = None)
+            gdf = add_shape_data_to_df(df, path_shp)
+            out_geojson_path = os.path.join(geojson_folder, file.replace('.csv', '.geojson'))
+            gdf.to_file(out_geojson_path, driver = 'GeoJSON')

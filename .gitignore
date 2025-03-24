@@ -7,8 +7,9 @@ key.txt
 # ignore observation data
 comparison/observation/data/
 
-# ignore Google data
+# ignore NetCDF data
 *.nc
+gauge_data.zip
 
 # ignore certain .csv files
 impact_data_Mali.csv
@@ -31,4 +32,6 @@ Hydrological_Models_API.ipynb
 GRRR_Google_Runoff_Reanalysis_&_Reforecast.ipynb
 preprocess_impact_data.py
 calculate_RPs.py
+country_gauge_matching_data_extraction_ORIGINAL.ipynb
+country_gauge_matching_data_extraction.ipynb
 
