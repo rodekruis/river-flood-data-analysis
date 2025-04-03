@@ -34,7 +34,8 @@ preprocess_impact_data.py
 calculate_RPs.py
 country_gauge_matching_data_extraction_ORIGINAL.ipynb
 country_gauge_matching_data_extraction.ipynb
+country_gauge_extraction/
 
 # ignore HyBAS GeoJSON files
-hybas_af_lev01-12_v1c/
+GoogleFloodHub/hybas_af_lev01-12_v1c/
 
