@@ -35,3 +35,6 @@ calculate_RPs.py
 country_gauge_matching_data_extraction_ORIGINAL.ipynb
 country_gauge_matching_data_extraction.ipynb
 
+# ignore HyBAS GeoJSON files
+hybas_af_lev01-12_v1c/
+
