@@ -1,0 +1,5 @@
+Check format of reforecast 
+1. Threshold calculation for each station from the reanalysis data (which is delivered as: NC per station over 1979 to 2023)
+2. flood event timestamps determination for each station from the reforecast data (which is delivered as: Nc per station over 1979 to 2023)
+3. The workflow is therefore fairly similar to the workflow of the 
+4. Question for andrea (how is the 60 percent ensemble member represented )
