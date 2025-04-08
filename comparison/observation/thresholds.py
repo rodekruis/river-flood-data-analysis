@@ -46,12 +46,14 @@ def calculate_max_discharge(hydro_df: pd.DataFrame,
         )
     if timescale == 'Year':
         hydro_df['Year'] = hydro_df.index.year
+
         maximum =  hydro_df.groupby('Year').max()
     elif timescale == 'Day':
         hydro_df['Day_Date'] = hydro_df.index.date
         maximum = hydro_df.groupby('Day_Date').max()
     else:
         raise ValueError("Invalid timescale. Use 'Year' or 'Day'.")
+
     return maximum
     
 def csv_to_cleaned_series(csv: str) -> pd.Series:
@@ -104,7 +106,7 @@ def Q_GEV_fit_percentile (hydro_df: pd.DataFrame, percentile: float, value_col: 
     return discharge_value
 
 
-def Q_Gumbel_fit_percentile(hydro_df: pd.DataFrame, percentile: float, value_col: str = 'Value') -> float:
+def Q_Gumbel_fit_percentile(hydro_df: pd.DataFrame, percentile: float, value_col: str = 'Value', date_col='Date') -> float:
     """
     Fits a Gumbel distribution to the annual maximum discharge values and calculates the discharge 
     corresponding to a given percentile.
@@ -118,7 +120,7 @@ def Q_Gumbel_fit_percentile(hydro_df: pd.DataFrame, percentile: float, value_col
         float: The discharge value corresponding to the given percentile.
     """
     # Calculate annual maximum discharges
-    daily_max_discharge = calculate_max_discharge(hydro_df, value_col, timescale='Day')
+    daily_max_discharge = calculate_max_discharge(hydro_df, value_col, timescale='Day', date_col=date_col)
 
     # Fit a Gumbel distribution
     loc, scale = gumbel_r.fit(daily_max_discharge)
@@ -129,14 +131,16 @@ def Q_Gumbel_fit_percentile(hydro_df: pd.DataFrame, percentile: float, value_col
 
 def Q_Gumbel_fit (hydro_df: pd.DataFrame, 
                     value_col: str = 'Value', 
-                    timescale: str = 'Year'):
-    max_discharges = calculate_max_discharge(hydro_df, value_col, timescale=timescale)
+                    timescale: str = 'Year',
+                    date_col: str='Date'):
+    max_discharges = calculate_max_discharge(hydro_df, value_col, timescale=timescale, date_col=date_col)
     loc_gumbel, scale_gumbel = gumbel_r.fit(max_discharges)
     return loc_gumbel, scale_gumbel
 
 def Q_Gumbel_fit_RP(hydro_df: pd.DataFrame, 
                     RP: float, 
-                    value_col: str = 'Value') -> float:
+                    value_col: str = 'Value',
+                    date_col: str = 'Date') -> float:
     """
     Fits a Gumbel distribution to annual maximum discharge values and calculates
     the discharge corresponding to a given return period.
@@ -147,7 +151,7 @@ def Q_Gumbel_fit_RP(hydro_df: pd.DataFrame,
     :param value_col: Name of the column containing discharge values (default: 'Value').
     :return: The discharge value corresponding to the return period.
     """
-    loc, scale = Q_Gumbel_fit (hydro_df, value_col, timescale='Year')
+    loc, scale = Q_Gumbel_fit (hydro_df, value_col, timescale='Year', date_col=date_col)
     return gumbel_r.ppf(1 - 1 / RP, loc, scale)
 
 
