@@ -353,7 +353,8 @@ class PredictedToImpactPerformanceAnalyzer:
                 'precision': np.nan,
                 'TP': hits,  
                 'FN': misses,
-                'FP': false_alarms
+                'FP': false_alarms,
+    
             }
         else: 
             print (f'hits: {hits}, misses: {misses}, false alarms: {false_alarms}, total {comparisonType} = {sum(obs==1)}, should be equal to {misses}+{hits}={misses+hits}')
@@ -384,9 +385,26 @@ class PredictedToImpactPerformanceAnalyzer:
         scores_by_commune = self.impact_gdf.groupby(self.spatial_unit).apply(
             lambda x: self.calc_performance_scores(x[f'{self.comparisonType}'], x['Event'])
         )
-        scores_byCommune_gdf = self.gdf_shape.merge(scores_by_commune, on=f'{self.spatial_unit}')
-        scores_byCommune_gdf.to_file(f"{self.DataDir}/{self.model}/{self.comparisonType}/scores_byCommuneRP{self.RPyr:.1f}_yr_leadtime{self.leadtime}.gpkg")
-        scores_byCommune_gdf.drop(columns='geometry').to_csv(f"{self.DataDir}/{self.model}/{self.comparisonType}/scores_byCommuneRP{self.RPyr:.1f}_yr_leadtime{self.leadtime}.csv")
+        scores_byCommune_gdf = self.gdf_shape.merge(scores_by_commune, on=self.spatial_unit)
+        scores_byCommune_gdf = scores_byCommune_gdf.rename(columns={self.spatial_unit: "identifier"})
+                                    
+        #GloFAS_vs_OBS_168lt_5rp.csv 
+        if self.comparisonType == 'Observation':
+            reference = 'OBS'
+        elif self.comparisonType == 'Impact': 
+            reference = 'IMP'
+        else:
+            raise ValueError(f"Unknown comparisonType: {self.comparisonType}")
+
+        # Construct file paths
+        path = f"{self.DataDir}/{self.model}/{self.comparisonType}/{self.model}_vs_{reference}_{self.leadtime}lt_{self.RPyr:.1f}"
+        gpkg_path = path +'.gpkg'
+        csv_path = path +'.csv'
+
+        # Export files
+        scores_byCommune_gdf.to_file(gpkg_path)
+        scores_byCommune_gdf.drop(columns='geometry').to_csv(csv_path)
+
         return scores_byCommune_gdf
 
 if __name__=='__main__':

@@ -130,7 +130,7 @@ def stampHydroTrigger(reforecast_df, reanalysis_df, type_of_extremity, probabili
     # Copy the DataFrame and add the 'trigger' column
     hydro_trigger_df = reforecast_df.copy()
     hydro_trigger_df['Trigger'] = (hydro_trigger_df[reforecast_value_col] > Q_prob).astype(int)
-
+    
     return hydro_trigger_df
 
 
