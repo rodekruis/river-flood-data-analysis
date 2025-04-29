@@ -423,94 +423,137 @@ if __name__=='__main__':
     # calculate observation for timeframe 
     comparisonType ='Observation'
 
-    # for percentile in cfg.percentiles: 
-    #     observation_per_station = pd.read_csv (f"{cfg.DataDir}/Observation/observationalStation_flood_events_percentile{percentile:.1f}.csv")
+    for percentile in cfg.percentiles: 
+        observation_per_station = pd.read_csv (f"{cfg.DataDir}/Observation/observationalStation_flood_events_percentile{percentile:.1f}.csv")
+        ptm_events_df = ptm_events (cfg.DNHstations, cfg.DataDir, 'percentile', percentile, cfg.StationCombos)
 
         
 
-    #     # PTM_events_per_adm = events_per_adm (cfg.DataDir, cfg.admPath, cfg.adminLevel, cfg.DNHstations, cfg.stationsDir, ptm_events_df, 'PTM', RPyr)
-    #     for leadtime in cfg.leadtimes:
-
-    #         analyzerPTM = PredictedToImpactPerformanceAnalyzer(DataDir = cfg.DataDir, 
-    #                                                             RPyr=percentile, 
-    #                                                             impactData=observation_per_station, 
-    #                                                             triggerProb=cfg.triggerProb,  
-    #                                                             startYear = cfg.startYear, 
-    #                                                             endYear = cfg.endYear, 
-    #                                                             years=cfg.years, 
-    #                                                             PredictedEvents_gdf = ptm_events_df, 
-    #                                                             comparisonType = comparisonType, 
-    #                                                             actionLifetime = cfg.actionLifetime, 
-    #                                                             model = 'PTM', 
-    #                                                             leadtime = leadtime,
-    #                                                             stationcoordinates=cfg.DNHstations)
-    #         analyzerPTM.matchImpact_and_Trigger()
-    #         analyzerPTM.calculateCommunePerformance()     
-
-
-    # for RPyr in cfg.RPsyr: 
-    #     #okay so now return period, setting it low to a standard to make sure there are many hits 
-    #     observation_per_station = pd.read_csv(f'{cfg.DataDir}/{comparisonType}/observationalStation_flood_events_RP_{RPyr:.1f}yr.csv')
-    #     ptm_events_df = ptm_events (cfg.DNHstations, cfg.DataDir, 'RP', RPyr, cfg.StationCombos)
-
-    #     # PTM_events_per_adm = events_per_adm (cfg.DataDir, cfg.admPath, cfg.adminLevel, cfg.DNHstations, cfg.stationsDir, ptm_events_df, 'PTM', RPyr)
-    #     for leadtime in cfg.leadtimes:
-    #         analyzerPTM = PredictedToImpactPerformanceAnalyzer(DataDir = cfg.DataDir, 
-    #                                                             RPyr=RPyr, 
-    #                                                             impactData=observation_per_station, 
-    #                                                             triggerProb=cfg.triggerProb,  
-    #                                                             startYear = cfg.startYear, 
-    #                                                             endYear = cfg.endYear, 
-    #                                                             years=cfg.years, 
-    #                                                             PredictedEvents_gdf = ptm_events_df, 
-    #                                                             comparisonType = comparisonType, 
-    #                                                             actionLifetime = cfg.actionLifetime, 
-    #                                                             model = 'PTM', 
-    #                                                             leadtime = leadtime,
-    #                                                             stationcoordinates=cfg.DNHstations)
-    #         analyzerPTM.matchImpact_and_Trigger()
-    #         analyzerPTM.calculateCommunePerformance()   
-    
-    # GloFAS: 
-    for RPyr in cfg.RPsyr: 
-        observation_per_station = pd.read_csv (f"{cfg.DataDir}/Observation/observationalStation_flood_events_RP_{RPyr:.1f}yr.csv")
+        # PTM_events_per_adm = events_per_adm (cfg.DataDir, cfg.admPath, cfg.adminLevel, cfg.DNHstations, cfg.stationsDir, ptm_events_df, 'PTM', RPyr)
         for leadtime in cfg.leadtimes:
-            glofas3_station_events = str(cfg.DataDir / f"GloFAS_31_rfcst_Mali/GloFASstation_flood_events_RP{RPyr:.1f}yr_leadtime{leadtime:.1f}.csv")
-            analyzerG = PredictedToImpactPerformanceAnalyzer(DataDir = cfg.DataDir, 
-                                                                RPyr=RPyr, 
-                                                                impactData=observation_per_station, 
-                                                                triggerProb=cfg.triggerProb,  
-                                                                startYear =cfg.startYear, # for compatibility with glofas
-                                                                endYear= cfg.endYear, 
-                                                                years=cfg.years, 
-                                                                PredictedEvents_gdf = glofas3_station_events, 
-                                                                comparisonType = comparisonType, 
-                                                                actionLifetime = cfg.actionLifetime, 
-                                                                model = 'GloFAS3', 
-                                                                leadtime = leadtime,
-                                                                stationcoordinates=cfg.DNHstations)
-            analyzerG.matchImpact_and_Trigger()
-            analyzerG.calculateCommunePerformance() 
 
-    for percentile in cfg.percentiles: 
-        observation_per_station = pd.read_csv (f"{cfg.DataDir}/Observation/observationalStation_flood_events_percentile{percentile:.1f}.csv")
-        for leadtime in cfg.leadtimes:
-            glofas3_station_events = str(cfg.DataDir / f"GloFAS_31_rfcst_Mali/GloFASstation_flood_events_RP{RPyr:.1f}yr_leadtime{leadtime:.1f}.csv")
-            analyzerG = PredictedToImpactPerformanceAnalyzer(DataDir = cfg.DataDir, 
+            analyzerPTM = PredictedToImpactPerformanceAnalyzer(DataDir = cfg.DataDir, 
                                                                 RPyr=percentile, 
                                                                 impactData=observation_per_station, 
                                                                 triggerProb=cfg.triggerProb,  
-                                                                startYear =cfg.startYear, 
-                                                                endYear= cfg.endYear, 
+                                                                startYear = cfg.startYear, 
+                                                                endYear = cfg.endYear, 
                                                                 years=cfg.years, 
-                                                                PredictedEvents_gdf = glofas3_station_events, 
+                                                                PredictedEvents_gdf = ptm_events_df, 
                                                                 comparisonType = comparisonType, 
                                                                 actionLifetime = cfg.actionLifetime, 
-                                                                model = 'GloFAS3', 
+                                                                model = 'PTM', 
                                                                 leadtime = leadtime,
                                                                 stationcoordinates=cfg.DNHstations)
-            analyzerG.matchImpact_and_Trigger()
-            analyzerG.calculateCommunePerformance() 
+            analyzerPTM.matchImpact_and_Trigger()
+            analyzerPTM.calculateCommunePerformance()     
+
+
+    for RPyr in cfg.RPsyr: 
+        #okay so now return period, setting it low to a standard to make sure there are many hits 
+        observation_per_station = pd.read_csv(f'{cfg.DataDir}/{comparisonType}/observationalStation_flood_events_RP_{RPyr:.1f}yr.csv')
+        ptm_events_df = ptm_events (cfg.DNHstations, cfg.DataDir, 'RP', RPyr, cfg.StationCombos)
+
+        # PTM_events_per_adm = events_per_adm (cfg.DataDir, cfg.admPath, cfg.adminLevel, cfg.DNHstations, cfg.stationsDir, ptm_events_df, 'PTM', RPyr)
+        for leadtime in cfg.leadtimes:
+            analyzerPTM = PredictedToImpactPerformanceAnalyzer(DataDir = cfg.DataDir, 
+                                                                RPyr=RPyr, 
+                                                                impactData=observation_per_station, 
+                                                                triggerProb=cfg.triggerProb,  
+                                                                startYear = cfg.startYear, 
+                                                                endYear = cfg.endYear, 
+                                                                years=cfg.years, 
+                                                                PredictedEvents_gdf = ptm_events_df, 
+                                                                comparisonType = comparisonType, 
+                                                                actionLifetime = cfg.actionLifetime, 
+                                                                model = 'PTM', 
+                                                                leadtime = leadtime,
+                                                                stationcoordinates=cfg.DNHstations)
+            analyzerPTM.matchImpact_and_Trigger()
+            analyzerPTM.calculateCommunePerformance()   
+    
+    # GloFAS: 
+    # for RPyr in cfg.RPsyr: 
+    #     observation_per_station = pd.read_csv (f"{cfg.DataDir}/Observation/observationalStation_flood_events_RP_{RPyr:.1f}yr.csv")
+    #     for leadtime in cfg.leadtimes:
+    #         glofas3_station_events = str(cfg.DataDir / f"GloFAS_31_rfcst_Mali/GloFASstation_flood_events_RP{RPyr:.1f}yr_leadtime{leadtime:.1f}.csv")
+    #         analyzerG = PredictedToImpactPerformanceAnalyzer(DataDir = cfg.DataDir, 
+    #                                                             RPyr=RPyr, 
+    #                                                             impactData=observation_per_station, 
+    #                                                             triggerProb=cfg.triggerProb,  
+    #                                                             startYear =cfg.startYear, # for compatibility with glofas
+    #                                                             endYear= cfg.endYear, 
+    #                                                             years=cfg.years, 
+    #                                                             PredictedEvents_gdf = glofas3_station_events, 
+    #                                                             comparisonType = comparisonType, 
+    #                                                             actionLifetime = cfg.actionLifetime, 
+    #                                                             model = 'GloFAS3', 
+    #                                                             leadtime = leadtime,
+    #                                                             stationcoordinates=cfg.DNHstations)
+    #         analyzerG.matchImpact_and_Trigger()
+    #         analyzerG.calculateCommunePerformance() 
+
+    # for RPyr in cfg.RPsyr: 
+    #     observation_per_station = pd.read_csv (f"{cfg.DataDir}/Observation/observationalStation_flood_events_RP_{RPyr:.1f}yr.csv")
+    #     for leadtime in cfg.leadtimes:
+    #         #glofas3_station_events = str(cfg.DataDir / f"GloFAS_31_rfcst_Mali/GloFASstation_flood_events_RP{RPyr:.1f}yr_leadtime{leadtime:.1f}.csv")
+    #         glofas_station_events = str(cfg.stationsDir / f"GloFAS_Q/GloFASstation_flood_events_RP{RPyr:.1f}yr_leadtime{leadtime}.csv")
+    #         analyzerG = PredictedToImpactPerformanceAnalyzer(DataDir = cfg.DataDir, 
+    #                                                             RPyr=RPyr, 
+    #                                                             impactData=observation_per_station, 
+    #                                                             triggerProb=cfg.triggerProb,  
+    #                                                             startYear =cfg.startYear, # for compatibility with glofas
+    #                                                             endYear= cfg.endYear, 
+    #                                                             years=cfg.years, 
+    #                                                             PredictedEvents_gdf = glofas_station_events, 
+    #                                                             comparisonType = comparisonType, 
+    #                                                             actionLifetime = cfg.actionLifetime, 
+    #                                                             model = 'GloFAS', 
+    #                                                             leadtime = leadtime,
+    #                                                             stationcoordinates=cfg.DNHstations)
+    #         analyzerG.matchImpact_and_Trigger()
+    #         analyzerG.calculateCommunePerformance() 
+
+    # for percentile in cfg.percentiles: 
+    #     observation_per_station = pd.read_csv (f"{cfg.DataDir}/Observation/observationalStation_flood_events_percentile{percentile:.1f}.csv")
+    #     for leadtime in cfg.leadtimes:
+    #         glofas_station_events = str(cfg.stationsDir / f"GloFAS_Q/GloFASstation_flood_events_percentile{percentile:.1f}_leadtime{leadtime}.csv")
+    #         analyzerG = PredictedToImpactPerformanceAnalyzer(DataDir = cfg.DataDir, 
+    #                                                             RPyr=percentile, 
+    #                                                             impactData=observation_per_station, 
+    #                                                             triggerProb=cfg.triggerProb,  
+    #                                                             startYear =cfg.startYear, 
+    #                                                             endYear= cfg.endYear, 
+    #                                                             years=cfg.years, 
+    #                                                             PredictedEvents_gdf = glofas_station_events, 
+    #                                                             comparisonType = comparisonType, 
+    #                                                             actionLifetime = cfg.actionLifetime, 
+    #                                                             model = 'GloFAS', 
+    #                                                             leadtime = leadtime,
+    #                                                             stationcoordinates=cfg.DNHstations)
+    #         analyzerG.matchImpact_and_Trigger()
+    #         analyzerG.calculateCommunePerformance() 
+
+    # for percentile in cfg.percentiles: 
+    #     observation_per_station = pd.read_csv (f"{cfg.DataDir}/Observation/observationalStation_flood_events_percentile{percentile:.1f}.csv")
+    #     for leadtime in cfg.leadtimes:
+    #         glofas4_station_events =str(cfg.DataDir / f"GloFAS/Observation/loFASstation_flood_events_RP{RPyr:.1f}yr_leadtime{leadtime:.1f}.csv")
+    #         #glofas3_station_events = str(cfg.DataDir / f"GloFAS_31_rfcst_Mali/GloFASstation_flood_events_RP{RPyr:.1f}yr_leadtime{leadtime:.1f}.csv")
+    #         analyzerG = PredictedToImpactPerformanceAnalyzer(DataDir = cfg.DataDir, 
+    #                                                             RPyr=percentile, 
+    #                                                             impactData=observation_per_station, 
+    #                                                             triggerProb=cfg.triggerProb,  
+    #                                                             startYear =cfg.startYear, 
+    #                                                             endYear= cfg.endYear, 
+    #                                                             years=cfg.years, 
+    #                                                             PredictedEvents_gdf = glofas3_station_events, 
+    #                                                             comparisonType = comparisonType, 
+    #                                                             actionLifetime = cfg.actionLifetime, 
+    #                                                             model = 'GloFAS3', 
+    #                                                             leadtime = leadtime,
+    #                                                             stationcoordinates=cfg.DNHstations)
+    #         analyzerG.matchImpact_and_Trigger()
+    #         analyzerG.calculateCommunePerformance() 
 
 
     # comparisonType ='Impact'
