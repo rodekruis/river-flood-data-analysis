@@ -344,7 +344,9 @@ if __name__ =='__main__':
     df_obs = transform_hydro(f"{cfg.DataDir}/DNHMali_2019/Q_stations/{BasinName}_{StationName}.csv",cfg.startYear, cfg.endYear)
     df_glofas = pd.read_csv (f"{cfg.stationsDir}/GloFAS_Q/timeseries/discharge_timeseries_{StationName}_{leadtime}.csv")
     df_gfh = pd.read_csv (f"{cfg.DataDir}/GoogleFloodHub/timeseries/Bamako_streamflow.csv")
+    df_glofas3 = pd.read_csv(f"{cfg.DataDir}/GloFAS31_threshold/discharge_reanalysis_-8.05_12.55.csv")
 
+    df_glofas3 ['ValidTime'] = pd.to_datetime(df_glofas3["ValidTime"], format="%Y-%m-%d")
     df_gfh ['ValidTime'] = pd.to_datetime(df_gfh["issue_time"], format="%Y-%m-%d") + timedelta(days=leadtime/24)
     df_glofas['ValidTime'] = pd.to_datetime(df_glofas["ValidTime"], format="%Y-%m-%d")
 
@@ -353,17 +355,27 @@ if __name__ =='__main__':
         print("Warning: Some dates in 'date_col' ofglofas could not be parsed and are set to NaT.")
     if df_gfh['ValidTime'].isnull().any():
         print("Warning: Some dates in 'date_col' of gfh could not be parsed and are set to NaT.")
+    if df_glofas3['ValidTime'].isnull().any():
+        print ("Warning: Some dates in date_col could not be parsed and are set to NaT")
     # Set the index to the datetime column
     df_glofas.set_index('ValidTime', inplace=True)
     df_glofas.sort_index(inplace=True)
+    df_glofas3.set_index('ValidTime', inplace=True)
+    df_glofas3.sort_index(inplace=True)
 
     df_gfh.set_index('ValidTime', inplace=True)
     df_gfh.sort_index(inplace=True)
 
     df_impact = pd.read_csv (cfg.impact_csvPath, delimiter=';', header=0)
     RP_gfh = Q_Gumbel_fit_RP (df_gfh, return_period, f'{leadtime/24:.0f} days')
+    return_period=5
+    print (df_glofas3.columns)
+
+
     RP_glofas = Q_Gumbel_fit_RP(df_glofas, return_period, 'percentile_40.0')
+    RP_glofas3 = Q_Gumbel_fit_RP(df_glofas3, return_period, 'Discharge')
     RP_obs = Q_Gumbel_fit_RP (df_obs, return_period, 'Value')
+    print (f'glofas: {RP_glofas}, glofas3: {RP_glofas3}, obs: {RP_obs}')
     
     second_RP_gfh = Q_Gumbel_fit_RP (df_gfh, second_return_period, f'{leadtime/24:.0f} days')
     second_RP_glofas = Q_Gumbel_fit_RP(df_glofas, second_return_period, 'percentile_40.0')
