@@ -4,9 +4,10 @@ import math
 import os
 ################################ GLOFAS ###############################################
 
-os.chdir (f'C:/Users/els-2/') 
+
 cur = Path.cwd() 
-DataDir = cur / 'MaliGloFAS/data'
+parent = cur.parent
+DataDir = parent / 'data'
 # Mali area coordinates as in notation as used by GloFAS
 # north, west, south, east
 MaliArea = [25, -12.25, 10, 4.25] # Mali area [lat_max, lon_min, lat_min, lon_max] (upper left corner , down right corner)

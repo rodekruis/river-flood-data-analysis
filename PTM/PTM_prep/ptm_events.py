@@ -1,7 +1,7 @@
 from comparison.observation.HydroImpact import loop_over_stations_obs, events_per_adm
 import pandas as pd 
 from datetime import datetime, timedelta
-import GloFAS.GloFAS_prep.configuration as cfg
+import GloFAS.GloFAS_prep.config_comp as cfg
 columnID = 'StationName'
 # k = [upstream, downstream], v = days of propagation time 
 

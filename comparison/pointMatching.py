@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 from shapely.geometry import Point
 from scipy.spatial import cKDTree
 from GloFAS.GloFAS_prep.vectorCheck import checkVectorFormat
-import GloFAS.GloFAS_prep.configuration as cfg 
+import GloFAS.GloFAS_prep.config_comp as cfg 
 from GloFAS.GloFAS_prep.text_formatter import remove_accents
 import matplotlib.colors as mcolors
 from geopy.distance import geodesic

@@ -1,5 +1,5 @@
 import pandas as pd
-import GloFAS.GloFAS_prep.configuration as cfg
+import GloFAS.GloFAS_prep.config_comp as cfg
 import pyextremes as pe
 from pyextremes import EVA
 from scipy.stats import genextreme, gumbel_r
