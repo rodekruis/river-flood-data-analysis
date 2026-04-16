@@ -83,12 +83,11 @@ if __name__ == '__main__':
             f"{cfg.DataDir}/{model}/{comparisonType}/{model}_vs_{reference}_{leadtime}lt_{percentile:.1f}_{actionlifetime}al.csv"
         )
 
-        if pd.isna(al_df['pod']) and (pd.notna(al_df['far']) or pd.notna(al_df['FN'])):
-            al_df['pod'] = 0
+        mask_pod = al_df['pod'].isna() & (al_df['far'].notna() | al_df['FN']>0)
+        al_df.loc[mask_pod, 'pod'] = 0
 
-        # FAR condition
-        if pd.isna(al_df['far']) and (pd.notna(al_df['pod']) or pd.notna(al_df['TP'])):
-            al_df['far'] = 0
+        mask_far = al_df['far'].isna() & (al_df['pod'].notna() | al_df['TP'].notna())
+        al_df.loc[mask_far, 'far'] = 0
 
         POD_glofas = al_df['pod'].mean()
         FAR_glofas = al_df['far'].mean()
