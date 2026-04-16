@@ -63,6 +63,7 @@ def plot_POD_vs_action_lifetime(
 
     plt.show()
 
+
 if __name__ == '__main__':
     percentile = 95
     leadtime = 168
@@ -82,11 +83,19 @@ if __name__ == '__main__':
             f"{cfg.DataDir}/{model}/{comparisonType}/{model}_vs_{reference}_{leadtime}lt_{percentile:.1f}_{actionlifetime}al.csv"
         )
 
-        POD_glofas = al_df['pod'].mean()
+        if pd.isna(al_df['pod']) and (pd.notna(al_df['far']) or pd.notna(al_df['FN'])):
+            al_df['pod'] = 0
 
+        # FAR condition
+        if pd.isna(al_df['far']) and (pd.notna(al_df['pod']) or pd.notna(al_df['TP'])):
+            al_df['far'] = 0
+
+        POD_glofas = al_df['pod'].mean()
+        FAR_glofas = al_df['far'].mean()
         rows.append({
             'actionlifetime': actionlifetime,
-            'POD': POD_glofas
+            'POD': POD_glofas,
+            'FAR': FAR_glofas,
         })
 
     glofas_df = pd.DataFrame(rows)
