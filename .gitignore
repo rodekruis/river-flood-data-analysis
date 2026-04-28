@@ -39,3 +39,14 @@ country_gauge_extraction/
 # ignore HyBAS GeoJSON files
 GoogleFloodHub/hybas_af_lev01-12_v1c/
 
+# env control files
+.venv-510/
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+.env
+*.nc
+*.grib
+*.tif
+*.csv
+*.xlsx
