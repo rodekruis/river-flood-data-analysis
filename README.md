@@ -55,3 +55,19 @@ Data is also retrieved in probability_calculator (though you need to run 'Q_time
 
 ## Post processing 
 in the comparison folder - visualization folder, visualizations are suggested in the plot.py, which contains a visualization class 
+
+
+## Installation
+
+Clone the repository and create a virtual environment:
+
+```bash
+git clone https://github.com/rodekruis/river-flood-data-analysis.git
+cd river-flood-data-analysis
+
+python -m venv .venv
+.venv\Scripts\activate # windows
+# source .venv/bin/activate # mac/linux
+
+python -m pip install --upgrade pip
+pip install -r requirements.txt
